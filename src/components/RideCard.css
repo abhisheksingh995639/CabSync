@@ -1,0 +1,117 @@
+.ride-card {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.ride-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.ride-poster {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.avatar-sm {
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-full);
+  background: var(--bg-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.poster-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.ride-fare {
+  text-align: right;
+}
+
+.fare-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.fare-amount {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+}
+
+.ride-route {
+  position: relative;
+  padding-left: 1rem;
+}
+
+.route-point {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+  font-size: 0.9375rem;
+  margin: 0.5rem 0;
+}
+
+.route-icon {
+  position: absolute;
+  left: -0.5rem;
+  background: var(--bg-secondary);
+}
+
+.route-icon.pickup {
+  color: var(--success);
+}
+
+.route-icon.dropoff {
+  color: var(--danger);
+}
+
+.route-line {
+  position: absolute;
+  left: 0.35rem;
+  top: 1.5rem;
+  bottom: 1.5rem;
+  width: 2px;
+  background: var(--border-color);
+  border-style: dashed;
+}
+
+.ride-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.requests-alert {
+  color: var(--warning);
+  font-weight: 600;
+}
+
+.btn-full {
+  width: 100%;
+}
