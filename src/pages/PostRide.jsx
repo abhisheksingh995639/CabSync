@@ -64,10 +64,10 @@ const PostRide = () => {
 
   return (
     <div className="bg-[#F5F5F0] min-h-screen">
-      <main className="max-w-7xl mx-auto px-6 py-16">
-        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-12">
-          {/* Information Sidebar (Desktop Left) */}
-          <section className="lg:col-span-4 space-y-8 order-2 lg:order-1">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-16">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-8 lg:gap-12">
+          {/* Information Sidebar (Desktop Left) - Hidden on mobile to save space */}
+          <section className="hidden lg:block lg:col-span-4 space-y-8 order-2 lg:order-1">
             <div className="bg-white rounded-[2.5rem] p-8 skeuo-card">
               <h3 className="font-black text-2xl text-zinc-900 mb-4 flex items-center gap-2">
                 <span className="material-symbols-outlined text-[#FFD100]">savings</span>
@@ -115,14 +115,14 @@ const PostRide = () => {
           </section>
 
           {/* Main Form Section */}
-          <section className="lg:col-span-8 order-1 lg:order-2">
-            <div className="bg-white rounded-[3rem] p-8 lg:p-12 skeuo-card shadow-2xl">
-              <header className="mb-12">
-                <h1 className="font-black text-4xl lg:text-5xl text-zinc-900 tracking-tight mb-2">Post a <span className="editorial-italic text-[#FFD100]">Ride.</span></h1>
-                <p className="text-zinc-500 font-medium">Fill in the details to find your carpool partners.</p>
+          <section className="col-span-12 lg:col-span-8 order-1 lg:order-2">
+            <div className="bg-white rounded-[2rem] md:rounded-[3rem] p-5 md:p-8 lg:p-12 skeuo-card shadow-2xl">
+              <header className="mb-6 md:mb-12">
+                <h1 className="font-black text-3xl md:text-5xl text-zinc-900 tracking-tight mb-2">Post a <span className="editorial-italic text-[#FFD100]">Ride.</span></h1>
+                <p className="text-zinc-500 font-medium text-sm md:text-base">Fill in the details to find your carpool partners.</p>
               </header>
-              <form className="space-y-8" onSubmit={handleSubmit}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <form className="space-y-6 md:space-y-8" onSubmit={handleSubmit}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
                   {/* Pickup Location */}
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest block ml-2">Pickup Location</label>
@@ -132,7 +132,7 @@ const PostRide = () => {
                         name="pickup"
                         value={formData.pickup}
                         onChange={handleChange}
-                        className="w-full pl-12 pr-6 py-4 bg-zinc-50 border-none rounded-2xl skeuo-input-tactile focus:ring-2 focus:ring-[#FFD100]/20 outline-none transition-all placeholder:text-zinc-400 font-medium" 
+                        className="w-full pl-12 pr-6 py-3.5 md:py-4 bg-zinc-50 border-none rounded-2xl skeuo-input-tactile focus:ring-2 focus:ring-[#FFD100]/20 outline-none transition-all placeholder:text-zinc-400 font-medium text-sm md:text-base" 
                         placeholder="Where from?" 
                         type="text" 
                         required
@@ -148,7 +148,7 @@ const PostRide = () => {
                         name="destination"
                         value={formData.destination}
                         onChange={handleChange}
-                        className="w-full pl-12 pr-6 py-4 bg-zinc-50 border-none rounded-2xl skeuo-input-tactile focus:ring-2 focus:ring-[#FFD100]/20 outline-none transition-all placeholder:text-zinc-400 font-medium" 
+                        className="w-full pl-12 pr-6 py-3.5 md:py-4 bg-zinc-50 border-none rounded-2xl skeuo-input-tactile focus:ring-2 focus:ring-[#FFD100]/20 outline-none transition-all placeholder:text-zinc-400 font-medium text-sm md:text-base" 
                         placeholder="Where to?" 
                         type="text" 
                         required
@@ -156,7 +156,7 @@ const PostRide = () => {
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
                   {/* Date */}
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest block ml-2">Date</label>
@@ -166,7 +166,7 @@ const PostRide = () => {
                         name="date"
                         value={formData.date}
                         onChange={handleChange}
-                        className="w-full pl-12 pr-6 py-4 bg-zinc-50 border-none rounded-2xl skeuo-input-tactile focus:ring-2 focus:ring-[#FFD100]/20 outline-none transition-all font-medium" 
+                        className="w-full pl-12 pr-6 py-3.5 md:py-4 bg-zinc-50 border-none rounded-2xl skeuo-input-tactile focus:ring-2 focus:ring-[#FFD100]/20 outline-none transition-all font-medium text-sm md:text-base" 
                         type="date" 
                         required
                       />
@@ -181,7 +181,7 @@ const PostRide = () => {
                         name="time"
                         value={formData.time}
                         onChange={handleChange}
-                        className="w-full pl-12 pr-6 py-4 bg-zinc-50 border-none rounded-2xl skeuo-input-tactile focus:ring-2 focus:ring-[#FFD100]/20 outline-none transition-all font-medium" 
+                        className="w-full pl-12 pr-6 py-3.5 md:py-4 bg-zinc-50 border-none rounded-2xl skeuo-input-tactile focus:ring-2 focus:ring-[#FFD100]/20 outline-none transition-all font-medium text-sm md:text-base" 
                         type="time" 
                         required
                       />
@@ -196,7 +196,7 @@ const PostRide = () => {
                         name="seats"
                         value={formData.seats}
                         onChange={handleChange}
-                        className="w-full pl-12 pr-6 py-4 bg-zinc-50 border-none rounded-2xl skeuo-input-tactile focus:ring-2 focus:ring-[#FFD100]/20 outline-none transition-all placeholder:text-zinc-400 font-medium text-zinc-900" 
+                        className="w-full pl-12 pr-6 py-3.5 md:py-4 bg-zinc-50 border-none rounded-2xl skeuo-input-tactile focus:ring-2 focus:ring-[#FFD100]/20 outline-none transition-all placeholder:text-zinc-400 font-medium text-zinc-900 text-sm md:text-base" 
                         placeholder="Number of seats" 
                         type="number"
                         min="1"
@@ -206,7 +206,7 @@ const PostRide = () => {
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
                   {/* Total Fare */}
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest block ml-2">Estimated Total Fare (₹)</label>
@@ -216,7 +216,7 @@ const PostRide = () => {
                         name="fare"
                         value={formData.fare}
                         onChange={handleChange}
-                        className="w-full pl-12 pr-6 py-4 bg-zinc-50 border-none rounded-2xl skeuo-input-tactile focus:ring-2 focus:ring-[#FFD100]/20 outline-none transition-all placeholder:text-zinc-400 font-medium" 
+                        className="w-full pl-12 pr-6 py-3.5 md:py-4 bg-zinc-50 border-none rounded-2xl skeuo-input-tactile focus:ring-2 focus:ring-[#FFD100]/20 outline-none transition-all placeholder:text-zinc-400 font-medium text-sm md:text-base" 
                         placeholder="Enter total trip cost" 
                         type="number" 
                         required
@@ -226,13 +226,13 @@ const PostRide = () => {
                   {/* Ride Type Selector */}
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest block ml-2">Ride Type</label>
-                    <div className="flex gap-4">
+                    <div className="flex gap-3 md:gap-4">
                       {['Any', 'AC', 'Non-AC'].map((type) => (
                         <button
                           key={type}
                           type="button"
                           onClick={() => setFormData({...formData, rideType: type})}
-                          className={`flex-1 py-4 rounded-2xl font-black transition-all ${
+                          className={`flex-1 py-3 md:py-4 rounded-xl md:rounded-2xl font-black transition-all text-sm md:text-base ${
                             formData.rideType === type 
                               ? 'bg-zinc-900 text-[#FFD100] shadow-lg' 
                               : 'bg-zinc-50 text-zinc-400 hover:bg-zinc-100'
@@ -246,10 +246,10 @@ const PostRide = () => {
                 </div>
                 {error && <div className="p-4 bg-red-50 text-red-700 rounded-2xl text-sm font-bold border border-red-100">{error}</div>}
                 {/* Submit Button */}
-                <div className="pt-8">
+                <div className="pt-4 md:pt-8">
                   <button 
                     disabled={loading}
-                    className="w-full md:w-auto px-16 py-5 bg-zinc-900 text-[#FFD100] font-black rounded-2xl hover:bg-zinc-800 active:scale-95 transition-all shadow-2xl flex items-center justify-center gap-3 disabled:opacity-50" 
+                    className="w-full md:w-auto px-16 py-4 md:py-5 bg-zinc-900 text-[#FFD100] font-black rounded-xl md:rounded-2xl hover:bg-zinc-800 active:scale-95 transition-all shadow-2xl flex items-center justify-center gap-3 disabled:opacity-50 text-base md:text-lg" 
                     type="submit"
                   >
                     <span>{loading ? 'Posting...' : 'Post Your Ride'}</span>

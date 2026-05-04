@@ -30,7 +30,9 @@ const ProtectedLayout = () => (
     <div className="flex-grow pb-24 md:pb-0">
       <Outlet />
     </div>
-    <Footer />
+    <footer className="hidden md:block">
+      <Footer />
+    </footer>
   </div>
 );
 
@@ -44,7 +46,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
-            
+
             <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/post" element={<PostRide />} />

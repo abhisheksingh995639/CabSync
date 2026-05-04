@@ -8,6 +8,7 @@ import Slider from '@mui/material/Slider';
 const BrowseRides = () => {
   const [rides, setRides] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState(() => localStorage.getItem('cabsync_filter_search') || '');
   const [maxPrice, setMaxPrice] = useState(() => Number(localStorage.getItem('cabsync_filter_maxprice')) || 2500);
   const [selectedType, setSelectedType] = useState(() => localStorage.getItem('cabsync_filter_type') || 'Any');
@@ -70,8 +71,8 @@ const BrowseRides = () => {
 
 
   const filteredRides = rides.filter(ride => {
-    const matchesSearch = ride.destination.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ride.pickup.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (ride.destination || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (ride.pickup || "").toLowerCase().includes(searchTerm.toLowerCase());
     const matchesPrice = (ride.fare || 0) <= maxPrice;
     const matchesType = selectedType === 'Any' || ride.rideType === selectedType;
     
@@ -84,19 +85,19 @@ const BrowseRides = () => {
   return (
     <div className="bg-[#F5F5F0] min-h-screen">
       {/* Search Header Section */}
-      <section className="bg-white border-b border-zinc-200 py-8 px-6">
+      <section className="bg-white border-b border-zinc-200 py-6 md:py-8 px-4 md:px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-end gap-6">
-            <div className="space-y-2">
-              <h1 className="font-black text-4xl md:text-5xl text-zinc-900 tracking-tight">Available <span className="editorial-italic text-[#FFD100]">Rides.</span></h1>
-              <p className="text-zinc-500 font-medium">
+          <div className="flex flex-col md:flex-row justify-between items-center md:items-end gap-4 md:gap-6 text-center md:text-left">
+            <div className="space-y-1 md:space-y-2">
+              <h1 className="font-black text-3xl md:text-5xl text-zinc-900 tracking-tight">Available <span className="editorial-italic text-[#FFD100]">Rides.</span></h1>
+              <p className="text-zinc-500 font-medium text-sm md:text-base">
                 {loading ? 'Finding the best matches...' : `We found ${filteredRides.length} rides for you.`}
               </p>
             </div>
             <div className="w-full md:w-96 relative group">
               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-[#FFD100] transition-colors">search</span>
               <input 
-                className="w-full pl-12 pr-4 py-4 bg-zinc-50 border-none rounded-2xl skeuo-input-tactile focus:ring-2 focus:ring-[#FFD100]/20 outline-none transition-all placeholder:text-zinc-400 font-medium" 
+                className="w-full pl-12 pr-4 py-3 md:py-4 bg-zinc-50 border-none rounded-2xl skeuo-input-tactile focus:ring-2 focus:ring-[#FFD100]/20 outline-none transition-all placeholder:text-zinc-400 font-medium text-sm md:text-base" 
                 placeholder="Where are you going?" 
                 type="text" 
                 value={searchTerm}
@@ -104,13 +105,24 @@ const BrowseRides = () => {
               />
             </div>
           </div>
+          
+          {/* Mobile Filter Toggle */}
+          <div className="lg:hidden mt-6 flex justify-center">
+            <button 
+              onClick={() => setShowFilters(!showFilters)}
+              className="skeuo-button-tactile-light px-6 py-2.5 rounded-xl text-sm font-black flex items-center gap-2 border border-zinc-200"
+            >
+              <span className="material-symbols-outlined text-lg">{showFilters ? 'close' : 'tune'}</span>
+              {showFilters ? 'Close Filters' : 'Filter Results'}
+            </button>
+          </div>
         </div>
       </section>
 
-      <main className="max-w-7xl mx-auto px-6 py-12 flex flex-col lg:flex-row gap-16">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 flex flex-col lg:flex-row gap-8 lg:gap-12">
         {/* Sidebar Filters */}
-        <aside className="w-full lg:w-80 flex-shrink-0 space-y-8 lg:pr-12 lg:border-r lg:border-zinc-200/60">
-          <div className="bg-white p-8 rounded-[2.5rem] skeuo-card">
+        <aside className={`w-full lg:w-80 flex-shrink-0 space-y-8 lg:pr-10 lg:border-r lg:border-zinc-200/60 ${showFilters ? 'block' : 'hidden lg:block'}`}>
+          <div className="bg-white p-6 md:p-8 rounded-2xl md:rounded-[2.5rem] skeuo-card">
             <h2 className="text-xl font-black text-zinc-900 mb-6 flex items-center gap-2">
               <span className="material-symbols-outlined text-[#FFD100]">tune</span>
               Filter Results
@@ -221,7 +233,7 @@ const BrowseRides = () => {
             </div>
           </div>
 
-          <div className="bg-zinc-900 p-8 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden group">
+          <div className="hidden lg:block bg-zinc-900 p-8 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden group">
             <div className="absolute -top-12 -right-12 w-32 h-32 bg-[#FFD100]/20 rounded-full blur-2xl group-hover:bg-[#FFD100]/30 transition-all"></div>
             <h3 className="text-xl font-black mb-2 relative z-10">Post your ride</h3>
             <p className="text-white/60 text-sm mb-6 relative z-10 leading-relaxed">Save even more by sharing your own empty seats.</p>
@@ -232,33 +244,33 @@ const BrowseRides = () => {
         {/* Main Content Area */}
         <section className="flex-1">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-32 space-y-4">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FFD100]"></div>
-              <p className="text-zinc-400 font-bold">Scanning for available seats...</p>
+            <div className="flex flex-col items-center justify-center py-20 md:py-32 space-y-4">
+              <div className="animate-spin rounded-full h-10 w-10 md:h-12 md:w-12 border-b-2 border-[#FFD100]"></div>
+              <p className="text-zinc-400 font-bold text-sm md:text-base">Scanning for available seats...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
               {filteredRides.length > 0 ? (
                 filteredRides.map(ride => (
-                  <Link key={ride.id} to={`/ride/${ride.id}`} className="bg-white rounded-[2rem] p-6 sm:p-8 skeuo-card flex flex-col hover:-translate-y-2 transition-all duration-500 group">
-                    <div className="flex justify-between items-start mb-8">
-                      <div className="flex items-center gap-4">
+                  <Link key={ride.id} to={`/ride/${ride.id}`} className="bg-white rounded-2xl md:rounded-[2rem] p-4 md:p-6 lg:p-8 skeuo-card flex flex-col hover:-translate-y-1.5 transition-all duration-500 group">
+                    <div className="flex justify-between items-start mb-4 md:mb-8">
+                      <div className="flex items-center gap-3 md:gap-4">
                         <img 
                           alt={ride.hostName} 
-                          className="w-14 h-14 rounded-2xl skeuo-card object-cover" 
+                          className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl skeuo-card object-cover" 
                           src={ride.hostPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(ride.hostName)}&background=FFD100&color=000000`}
                           onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(ride.hostName)}&background=FFD100&color=000000` }}
                         />
                         <div>
-                          <h3 className="font-black text-zinc-900">{ride.hostName}</h3>
-                          <div className="flex gap-2 mt-1">
-                            <div className="flex items-center text-[10px] font-black text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded-md uppercase tracking-widest">
-                              <span className="material-symbols-outlined text-[12px] mr-1" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                          <h3 className="font-black text-zinc-900 text-sm md:text-base">{ride.hostName}</h3>
+                          <div className="flex gap-1.5 md:gap-2 mt-0.5 md:mt-1">
+                            <div className="flex items-center text-[8px] md:text-[10px] font-black text-yellow-600 bg-yellow-50 px-1.5 md:px-2 py-0.5 rounded-md uppercase tracking-widest">
+                              <span className="material-symbols-outlined text-[10px] md:text-[12px] mr-0.5 md:mr-1" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
                               Top Rated
                             </div>
                             {ride.rideType && (
-                              <div className="flex items-center text-[10px] font-black text-zinc-400 bg-zinc-50 px-2 py-0.5 rounded-md uppercase tracking-widest border border-zinc-100">
-                                <span className="material-symbols-outlined text-[12px] mr-1">ac_unit</span>
+                              <div className="flex items-center text-[8px] md:text-[10px] font-black text-zinc-400 bg-zinc-50 px-1.5 md:px-2 py-0.5 rounded-md uppercase tracking-widest border border-zinc-100">
+                                <span className="material-symbols-outlined text-[10px] md:text-[12px] mr-0.5 md:mr-1">ac_unit</span>
                                 {ride.rideType}
                               </div>
                             )}
@@ -266,69 +278,69 @@ const BrowseRides = () => {
                         </div>
                       </div>
                       <div className="flex flex-col items-end">
-                        <span className="text-3xl font-black text-zinc-900 tracking-tighter">₹{Math.round(ride.fare / ((ride.passengers?.length || 0) + 1))}</span>
-                        <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mt-0.5">per person</span>
+                        <span className="text-xl md:text-3xl font-black text-zinc-900 tracking-tighter">₹{Math.round((ride.fare || 0) / ((ride.passengers?.length || 0) + 1))}</span>
+                        <span className="text-[8px] md:text-[9px] font-black text-zinc-400 uppercase tracking-widest mt-0.5">per person</span>
                       </div>
                     </div>
 
-                    <div className="space-y-6 mb-8 relative">
+                    <div className="space-y-4 md:space-y-6 mb-4 md:mb-8 relative">
                       {/* Decorative path line */}
-                      <div className="absolute left-[15px] top-4 bottom-4 w-0.5 bg-zinc-100 group-hover:bg-[#FFD100]/30 transition-colors"></div>
+                      <div className="absolute left-[13px] md:left-[15px] top-4 bottom-4 w-0.5 bg-zinc-100 group-hover:bg-[#FFD100]/30 transition-colors"></div>
                       
-                      <div className="flex items-center gap-6 relative z-10">
-                        <div className="w-8 h-8 rounded-full bg-zinc-50 flex items-center justify-center text-zinc-400 group-hover:bg-white transition-all skeuo-card border-none">
-                          <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>location_on</span>
+                      <div className="flex items-center gap-4 md:gap-6 relative z-10">
+                        <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-zinc-50 flex items-center justify-center text-zinc-400 group-hover:bg-white transition-all skeuo-card border-none">
+                          <span className="material-symbols-outlined text-xs md:text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>location_on</span>
                         </div>
                         <div className="flex-1">
-                          <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Pickup</p>
-                          <p className="text-zinc-600 font-bold truncate">{ride.pickup}</p>
+                          <p className="text-[8px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest">Pickup</p>
+                          <p className="text-zinc-600 font-bold text-sm md:text-base truncate">{ride.pickup}</p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-6 relative z-10">
-                        <div className="w-8 h-8 rounded-full bg-zinc-900 flex items-center justify-center text-[#FFD100] shadow-lg">
-                          <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>map</span>
+                      <div className="flex items-center gap-4 md:gap-6 relative z-10">
+                        <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-zinc-900 flex items-center justify-center text-[#FFD100] shadow-lg">
+                          <span className="material-symbols-outlined text-xs md:text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>map</span>
                         </div>
                         <div className="flex-1">
-                          <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Destination</p>
-                          <p className="text-zinc-900 font-black truncate">{ride.destination}</p>
+                          <p className="text-[8px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest">Destination</p>
+                          <p className="text-zinc-900 font-black text-sm md:text-base truncate">{ride.destination}</p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 mb-8 pt-6 border-t border-zinc-50">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-400">
-                          <span className="material-symbols-outlined text-xl">schedule</span>
+                    <div className="grid grid-cols-2 gap-3 md:gap-4 mb-4 md:mb-8 pt-4 md:pt-6 border-t border-zinc-50">
+                      <div className="flex items-center gap-2 md:gap-3">
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-400">
+                          <span className="material-symbols-outlined text-lg md:text-xl">schedule</span>
                         </div>
                         <div>
-                          <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-1">Time</p>
-                          <p className="text-sm font-black text-zinc-900">{formatTime12h(ride.time)}</p>
+                          <p className="text-[8px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-0.5 md:mb-1">Time</p>
+                          <p className="text-xs md:text-sm font-black text-zinc-900">{formatTime12h(ride.time)}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-400">
-                          <span className="material-symbols-outlined text-xl">group</span>
+                      <div className="flex items-center gap-2 md:gap-3">
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-400">
+                          <span className="material-symbols-outlined text-lg md:text-xl">group</span>
                         </div>
                         <div>
-                          <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-1">Seats</p>
-                          <p className="text-sm font-black text-zinc-900">{ride.availableSeats} left</p>
+                          <p className="text-[8px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-0.5 md:mb-1">Seats</p>
+                          <p className="text-xs md:text-sm font-black text-zinc-900">{ride.availableSeats} left</p>
                         </div>
                       </div>
                     </div>
 
-                    <button className="w-full py-4 bg-zinc-900 text-[#FFD100] font-black rounded-2xl hover:bg-zinc-800 transition-all shadow-xl active:scale-[0.98]">
+                    <div className="w-full py-2.5 md:py-4 bg-zinc-900 text-[#FFD100] text-center font-black rounded-xl md:rounded-2xl hover:bg-zinc-800 transition-all shadow-lg active:scale-[0.98] text-sm md:text-base">
                       Join Now
-                    </button>
+                    </div>
                   </Link>
                 ))
               ) : (
-                <div className="col-span-full py-20 text-center bg-white rounded-[2rem] skeuo-card !transition-none flex flex-col items-center">
-                  <div className="w-20 h-20 bg-zinc-50 rounded-3xl flex items-center justify-center mb-6 text-zinc-300">
-                    <span className="material-symbols-outlined text-5xl">search_off</span>
+                <div className="col-span-full py-16 md:py-20 text-center bg-white rounded-2xl md:rounded-[2rem] skeuo-card !transition-none flex flex-col items-center">
+                  <div className="w-16 h-16 md:w-20 md:h-20 bg-zinc-50 rounded-3xl flex items-center justify-center mb-4 md:mb-6 text-zinc-300">
+                    <span className="material-symbols-outlined text-4xl md:text-5xl">search_off</span>
                   </div>
-                  <h3 className="text-2xl font-black text-zinc-900 mb-2">No rides found</h3>
-                  <p className="text-zinc-400 font-medium max-w-xs mx-auto">Try adjusting your search terms or filters to find more travelers.</p>
+                  <h3 className="text-xl md:text-2xl font-black text-zinc-900 mb-1 md:mb-2">No rides found</h3>
+                  <p className="text-zinc-400 font-medium text-sm md:text-base max-w-xs mx-auto px-4">Try adjusting your search terms or filters to find more travelers.</p>
                 </div>
               )}
             </div>

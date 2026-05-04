@@ -178,15 +178,9 @@ const Signup = () => {
             </div>
 
             {/* Social Buttons */}
-            <div className="flex justify-center gap-6">
+            <div className="flex justify-center">
                 <button onClick={handleGoogleLogin} disabled={loading} type="button" className="w-14 h-14 rounded-full border border-zinc-200 flex items-center justify-center hover:bg-zinc-50 hover:-translate-y-1 transition-all skeuo-card">
                     <img alt="Google" className="w-6 h-6" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzkyanejCdQEcnjkKxsQpu0Cb4wcSxKQQ0Udmmf4P6JiYy4gZUAZN6c2vW33ABakLndEyT06KjpawYMATE2lU_I7jSEkm7ShTOvjTLIsWmcXTOXUluV0oJfPEwO_mdCp6VLbkVpD8V9Xwd-6BNdAkWNdOItV_1JvPBND-0ysCkrukWF-BfI6S6YP6E4dzs8q3du_xPzaM1JaGkE2hCJzN9_Y_9eEyk0N-9OSd_kxpt5Q9euLDmhoalFas7ghnCgpNke8ubw1vGaIuw" />
-                </button>
-                <button type="button" className="w-14 h-14 rounded-full border border-zinc-200 flex items-center justify-center hover:bg-zinc-50 hover:-translate-y-1 transition-all skeuo-card">
-                    <svg className="w-6 h-6 text-[#1877F2]" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                </button>
-                <button type="button" className="w-14 h-14 rounded-full border border-zinc-200 flex items-center justify-center hover:bg-zinc-50 hover:-translate-y-1 transition-all skeuo-card">
-                    <svg className="w-6 h-6 text-black" fill="currentColor" viewBox="0 0 24 24"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.05 2.53.68 3.14.68.65 0 1.98-.75 3.49-.63 1.35.05 2.45.54 3.16 1.48-2.61 1.54-2.18 4.89.4 5.92-.61 1.7-1.46 3.42-2.19 5.52zm-3.66-14.2c.48-1.57-.4-3.26-1.94-3.79-.62 1.63.49 3.23 1.94 3.79z"/></svg>
                 </button>
             </div>
 
