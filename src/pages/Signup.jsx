@@ -180,7 +180,7 @@ const Signup = () => {
             {/* Social Buttons */}
             <div className="flex justify-center">
                 <button onClick={handleGoogleLogin} disabled={loading} type="button" className="w-14 h-14 rounded-full border border-zinc-200 flex items-center justify-center hover:bg-zinc-50 hover:-translate-y-1 transition-all skeuo-card">
-                    <img alt="Google" className="w-6 h-6" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzkyanejCdQEcnjkKxsQpu0Cb4wcSxKQQ0Udmmf4P6JiYy4gZUAZN6c2vW33ABakLndEyT06KjpawYMATE2lU_I7jSEkm7ShTOvjTLIsWmcXTOXUluV0oJfPEwO_mdCp6VLbkVpD8V9Xwd-6BNdAkWNdOItV_1JvPBND-0ysCkrukWF-BfI6S6YP6E4dzs8q3du_xPzaM1JaGkE2hCJzN9_Y_9eEyk0N-9OSd_kxpt5Q9euLDmhoalFas7ghnCgpNke8ubw1vGaIuw" />
+                    <img alt="Google" className="w-6 h-6" src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" />
                 </button>
             </div>
 

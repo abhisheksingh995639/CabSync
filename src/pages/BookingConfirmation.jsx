@@ -57,7 +57,7 @@ const BookingConfirmation = () => {
         {/* Poster / Contact Info Card */}
         <div className="col-span-12 lg:col-span-4 space-y-6">
           <div className="bg-background-primary rounded-xl p-6 shadow-md border border-border-subtle">
-            <h3 className="font-h3 text-h3 text-text-primary mb-6">Your Driver</h3>
+            <h3 className="font-h3 text-h3 text-text-primary mb-6">Your Host</h3>
             <div className="flex items-center gap-4 mb-8">
               <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary-container">
                 <img alt="Sarah J." className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC8q6xuxKda2Gq49evt0IuhfF0psCajZ_JEZ9-l7jOgwBl7dhcqEt6KZ138KSz_GCw_3-qctNviPjs6ngpcxsFEB2_njDyP5Q-zQktqnYYeFkpXFpNjwbz1aN4t1y6P753qu9eDFO4_9Q-ZDElDSq5qs3_b24dSXKVpPE8DJ_NRK0SOtNG3449qHfRUyf9Dmbzno0_bTu2sFp-287VwOTHWLgcC9SGxPIcEs6XeKi1DS7X7ZRhM52mj0ih4nl9wOSKFEtgZUK_ZYYkZ" />
@@ -94,7 +94,7 @@ const BookingConfirmation = () => {
               </li>
               <li className="flex items-start gap-3">
                 <span className="material-symbols-outlined text-primary-container scale-75">check_circle</span>
-                <span>Confirm driver name before entering.</span>
+                <span>Confirm host name before entering.</span>
               </li>
             </ul>
           </div>

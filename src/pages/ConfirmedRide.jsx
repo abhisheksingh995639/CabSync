@@ -13,7 +13,7 @@ const ConfirmedRide = () => {
           <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
           <div>
             <h3 className="font-h3 text-h3">Ride Confirmed</h3>
-            <p className="font-body-md text-body-md opacity-90">Driver is arriving in 8 mins</p>
+            <p className="font-body-md text-body-md opacity-90">Host is arriving in 8 mins</p>
           </div>
         </div>
         <div className="bg-white/30 px-md py-sm rounded-full font-label-caps text-label-caps">
@@ -42,11 +42,11 @@ const ConfirmedRide = () => {
               </div>
             </div>
           </div>
-          {/* Driver Card */}
+          {/* Host Card */}
           <div className="bg-white border border-border-subtle rounded-xl shadow-md p-md flex items-center justify-between">
             <div className="flex items-center gap-md">
               <img 
-                alt="Driver" 
+                alt="Host" 
                 className="w-16 h-16 rounded-full border-2 border-primary-container" 
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuBU5JqCd--JBU4ZGmaJJoVL9AzV2w95Arx5Ei5r9_r1oyEvAZ1fiasXi7sbPf4ydxZxG7N6OeIRIhG2o0j3Hf5ufUcLQJ6Eu6lK-glsyAIjCFGSPxpPTpwNOa0VlvTo0WiFi72l0tasKOahi5GsTtL9YO8YWNhyEU6lLqh8J4LJYb6nEjLT5hUU4axJQWl8AcCpbtQt2JZAEcnwML_nstXs_DbdRfXwCK8xwwSensToz1JJBFpPkxnlu_0mELIhfUf61JNRNDvrDeqk" 
               />
@@ -61,7 +61,7 @@ const ConfirmedRide = () => {
             </div>
             <button className="bg-primary-container hover:bg-accent-light text-text-primary px-lg py-md rounded-full font-label-caps flex items-center gap-sm active:scale-95 transition-all shadow-md">
               <span className="material-symbols-outlined">chat</span>
-              Message Driver
+              Message Host
             </button>
           </div>
         </div>
