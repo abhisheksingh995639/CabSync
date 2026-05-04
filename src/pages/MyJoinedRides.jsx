@@ -34,7 +34,7 @@ const MyJoinedRides = () => {
       });
 
       const ridesData = await Promise.all(ridesPromises);
-      setJoinedRides(ridesData.filter(r => r !== null && r.status !== 'completed'));
+      setJoinedRides(ridesData.filter(r => r !== null && r.status === 'open'));
       setLoading(false);
     }, (err) => {
       console.error("Error fetching joined rides:", err);

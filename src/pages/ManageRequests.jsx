@@ -113,9 +113,19 @@ const ManageRequests = () => {
       "Mark this ride as completed? This will move it to the history for all passengers.",
       async () => {
         try {
+          // 1. Update ride status
           await updateDoc(doc(db, 'rides', id), { status: 'completed' });
-          showNotification("Success", "Ride marked as completed!");
-          navigate('/dashboard');
+
+          // 2. Update all associated requests to 'completed'
+          const q = query(collection(db, 'requests'), where('rideId', '==', id));
+          const reqSnapshot = await getDocs(q);
+          const updatePromises = reqSnapshot.docs.map(reqDoc => 
+            updateDoc(doc(db, 'requests', reqDoc.id), { status: 'completed' })
+          );
+          await Promise.all(updatePromises);
+
+          showNotification("Success", `Ride from ${ride.pickup} to ${ride.destination} moved to history!`);
+          navigate('/history');
         } catch (err) {
           console.error("Error completing ride:", err);
           showNotification("Error", "Failed to complete ride.");
@@ -152,8 +162,18 @@ const ManageRequests = () => {
       "Permanently delete this ride? This cannot be undone.",
       async () => {
         try {
+          // 1. Find and cancel all associated requests
+          const q = query(collection(db, 'requests'), where('rideId', '==', id));
+          const reqSnapshot = await getDocs(q);
+          const updatePromises = reqSnapshot.docs.map(reqDoc => 
+            updateDoc(doc(db, 'requests', reqDoc.id), { status: 'cancelled' })
+          );
+          await Promise.all(updatePromises);
+
+          // 2. Delete the ride document
           await deleteDoc(doc(db, 'rides', id));
-          showNotification("Deleted", "Ride deleted.");
+          
+          showNotification("Deleted", "Ride and all associated requests removed.");
           navigate('/dashboard');
         } catch (err) {
           console.error("Error deleting ride:", err);

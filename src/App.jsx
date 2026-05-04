@@ -14,7 +14,7 @@ import { NotificationProvider } from './context/NotificationContext';
 import Signup from './pages/Signup';
 import Home from './pages/Home';
 import ForgotPassword from './pages/ForgotPassword';
-import MyRequests from './pages/MyRequests';
+import History from './pages/History';
 import ConfirmedRide from './pages/ConfirmedRide';
 import ManageRequests from './pages/ManageRequests';
 import Messages from './pages/Messages';
@@ -54,7 +54,7 @@ function App() {
               <Route path="/ride/:id" element={<RideDetails />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/edit-profile" element={<EditProfile />} />
-              <Route path="/my-requests" element={<MyRequests />} />
+              <Route path="/history" element={<History />} />
               <Route path="/confirmed-ride/:id" element={<ConfirmedRide />} />
               <Route path="/manage-requests/:id" element={<ManageRequests />} />
               <Route path="/messages" element={<Messages />} />

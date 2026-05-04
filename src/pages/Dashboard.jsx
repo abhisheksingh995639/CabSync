@@ -51,7 +51,8 @@ const Dashboard = () => {
 
     const myRidesQuery = query(
       collection(db, 'rides'),
-      where('hostId', '==', currentUser.uid)
+      where('hostId', '==', currentUser.uid),
+      where('status', '==', 'open')
     );
 
     const unsubscribeMyRides = onSnapshot(myRidesQuery, (snapshot) => {
@@ -101,6 +102,7 @@ const Dashboard = () => {
 
   const statusConfig = {
     approved: { bg: 'bg-green-50 text-green-700 border-green-100', icon: 'verified' },
+    completed:{ bg: 'bg-blue-50 text-blue-700 border-blue-100',   icon: 'check_circle' },
     pending:  { bg: 'bg-zinc-50 text-zinc-500 border-zinc-100',   icon: 'schedule' },
     cancelled:{ bg: 'bg-zinc-100 text-zinc-400 border-zinc-200',  icon: 'block' },
     rejected: { bg: 'bg-red-50 text-red-700 border-red-100',      icon: 'block' },
@@ -203,7 +205,7 @@ const Dashboard = () => {
             { title: "Browse",  icon: "search",       link: "/browse"          },
             { title: "Post",    icon: "add_circle",   link: "/post"            },
             { title: "Joined",  icon: "group",        link: "/my-joined-rides" },
-            { title: "History", icon: "history",      link: "/my-requests"     },
+            { title: "History", icon: "history",      link: "/history"         },
           ].map((action, i) => (
             <Link
               key={i}

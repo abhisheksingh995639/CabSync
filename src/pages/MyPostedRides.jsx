@@ -45,7 +45,8 @@ const MyPostedRides = () => {
 
     const q = query(
       collection(db, 'rides'),
-      where('hostId', '==', currentUser.uid)
+      where('hostId', '==', currentUser.uid),
+      where('status', '==', 'open')
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {

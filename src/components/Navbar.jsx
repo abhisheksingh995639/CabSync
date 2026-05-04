@@ -38,7 +38,7 @@ const Navbar = () => {
             <Link to="/browse" className={navLinkClass('/browse')}>Search</Link>
             <Link to="/post" className={navLinkClass('/post')}>Post</Link>
             <Link to="/my-joined-rides" className={navLinkClass('/my-joined-rides')}>Joined</Link>
-            <Link to="/my-requests" className={navLinkClass('/my-requests')}>History</Link>
+            <Link to="/history" className={navLinkClass('/history')}>History</Link>
           </nav>
 
           <div className="flex items-center gap-2 md:gap-4">
@@ -74,7 +74,7 @@ const Navbar = () => {
           <span className="material-symbols-outlined">group</span>
           <span className="font-['Inter'] text-[10px] font-bold">Joined</span>
         </Link>
-        <Link to="/my-requests" className={mobileNavLinkClass('/my-requests')}>
+        <Link to="/history" className={mobileNavLinkClass('/history')}>
           <span className="material-symbols-outlined">history</span>
           <span className="font-['Inter'] text-[10px] font-bold">History</span>
         </Link>
