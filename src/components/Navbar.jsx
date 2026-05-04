@@ -42,7 +42,6 @@ const Navbar = () => {
           </nav>
 
           <div className="flex items-center gap-2 md:gap-4">
-            <span className="material-symbols-outlined text-zinc-500 cursor-pointer hover:bg-zinc-100 hover:text-zinc-900 p-2.5 rounded-full transition-colors hidden sm:block" style={{ fontVariationSettings: "'FILL' 0" }}>notifications</span>
             <Link to="/messages" className="material-symbols-outlined text-zinc-500 cursor-pointer hover:bg-zinc-100 hover:text-zinc-900 p-2.5 rounded-full transition-colors hidden sm:block" style={{ fontVariationSettings: "'FILL' 0" }}>chat_bubble</Link>
             <Link to="/profile" className="w-10 h-10 ml-2 rounded-[14px] overflow-hidden border-2 border-zinc-200 hover:border-yellow-400 transition-colors shadow-sm">
               <img 
