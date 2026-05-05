@@ -41,9 +41,9 @@ const Login = () => {
   };
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-[#F5F5F0] flex items-center justify-center p-4 sm:p-8 relative">
+    <div className="h-screen w-screen overflow-hidden bg-white flex items-center justify-center relative">
       {/* Main Container */}
-      <div className="w-full h-full max-h-[900px] max-w-6xl skeuo-card rounded-[2.5rem] bg-white flex flex-col md:flex-row overflow-hidden relative shadow-2xl border-zinc-200">
+      <div className="w-full h-full flex flex-col md:flex-row overflow-hidden relative">
 
         {/* Close Button */}
         <Link to="/" className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full hover:bg-zinc-100 text-zinc-400 hover:text-zinc-900 transition-colors z-20">
@@ -118,11 +118,18 @@ const Login = () => {
 
             {/* Submit Button */}
             <button
-              className="w-full py-4 mt-2 bg-[#FFD100] text-zinc-900 font-black text-lg rounded-2xl skeuo-button-raised hover:translate-y-[-2px] active:translate-y-[4px] transition-all disabled:opacity-50 disabled:pointer-events-none"
+              className="w-full py-4 mt-2 bg-[#FFD100] text-zinc-900 font-black text-lg rounded-2xl skeuo-button-raised hover:translate-y-[-2px] active:translate-y-[4px] transition-all disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-3"
               type="submit"
               disabled={loading}
             >
-              {loading ? 'Logging In...' : 'Log In'}
+              {loading ? (
+                <>
+                  <div className="w-5 h-5 border-3 border-zinc-900/20 border-t-zinc-900 rounded-full animate-spin"></div>
+                  <span>Logging In...</span>
+                </>
+              ) : (
+                'Log In'
+              )}
             </button>
           </form>
 
@@ -135,8 +142,14 @@ const Login = () => {
 
           {/* Social Buttons */}
           <div className="flex justify-center">
-            <button onClick={handleGoogleLogin} disabled={loading} type="button" className="w-14 h-14 rounded-full border border-zinc-200 flex items-center justify-center hover:bg-zinc-50 hover:-translate-y-1 transition-all skeuo-card">
-              <img alt="Google" className="w-6 h-6" src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" />
+            <button 
+              onClick={handleGoogleLogin} 
+              disabled={loading} 
+              type="button" 
+              className="w-full h-14 rounded-2xl border border-zinc-200 flex items-center justify-center gap-3 hover:bg-zinc-50 hover:-translate-y-0.5 transition-all skeuo-card active:translate-y-0"
+            >
+              <img alt="Google" className="w-5 h-5" src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" />
+              <span className="font-bold text-zinc-700 text-sm">Continue with Google</span>
             </button>
           </div>
 

@@ -1,7 +1,15 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import Footer from '../components/Footer';
 
 const Home = () => {
+  const { currentUser } = useAuth();
+  const [showAppModal, setShowAppModal] = React.useState(false);
+
+  if (currentUser) {
+    return <Navigate to="/dashboard" />;
+  }
   const [pickup, setPickup] = React.useState('');
   const [destination, setDestination] = React.useState('');
 
@@ -72,7 +80,7 @@ const Home = () => {
                     />
                   </div>
                   <Link 
-                    to="/browse" 
+                    to={currentUser ? "/browse" : "/signup"} 
                     onClick={handleFindRide}
                     className="skeuo-button-raised w-full py-3.5 rounded-xl md:rounded-2xl font-black text-zinc-900 whitespace-nowrap text-center transition-all bg-[#FFD100] text-sm md:text-base"
                   >
@@ -81,7 +89,7 @@ const Home = () => {
                 </div>
               </div>
               <div className="mt-5 md:mt-8">
-                <Link to="/post" className="inline-flex items-center gap-3 text-zinc-900 font-black text-xs md:text-sm group">
+                <Link to={currentUser ? "/post" : "/signup"} className="inline-flex items-center gap-3 text-zinc-900 font-black text-xs md:text-sm group">
                   Post a Ride instead
                   <span className="w-7 h-7 md:w-8 md:h-8 bg-white rounded-full shadow-sm flex items-center justify-center group-hover:bg-yellow-400 transition-colors">
                     <span className="material-symbols-outlined text-xs md:text-sm">arrow_forward</span>
@@ -296,10 +304,16 @@ const Home = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-5 relative z-10">
-              <button className="skeuo-button-tactile-dark text-white w-full sm:w-auto px-8 md:px-10 py-4 rounded-2xl font-black text-base md:text-lg">
+              <button 
+                onClick={() => setShowAppModal(true)}
+                className="skeuo-button-tactile-dark text-white w-full sm:w-auto px-8 md:px-10 py-4 rounded-2xl font-black text-base md:text-lg"
+              >
                 Download for Android
               </button>
-              <button className="skeuo-button-tactile-light text-zinc-900 w-full sm:w-auto px-8 md:px-10 py-4 rounded-2xl font-black text-base md:text-lg">
+              <button 
+                onClick={() => setShowAppModal(true)}
+                className="skeuo-button-tactile-light text-zinc-900 w-full sm:w-auto px-8 md:px-10 py-4 rounded-2xl font-black text-base md:text-lg"
+              >
                 Download for iOS
               </button>
             </div>
@@ -308,88 +322,61 @@ const Home = () => {
       </main>
 
       {/* Footer */}
-      <footer className="hidden md:block w-full bg-white border-t border-zinc-200 py-10 md:py-16 px-4 md:px-12">
-        <div className="max-w-screen-2xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-8 md:gap-12 mb-10 md:mb-16">
-            {/* Brand Column */}
-            <div className="lg:col-span-1">
-              <div className="flex items-center gap-2 mb-6">
-                <div className="w-8 h-8 bg-[#FFD100] rounded flex items-center justify-center font-bold text-zinc-900">c</div>
-                <div className="text-2xl font-black text-zinc-900">CabSync</div>
-              </div>
-              <p className="text-zinc-500 text-sm leading-relaxed mb-8 max-w-xs">
-                Revolutionizing urban mobility in India through smart technology and a community-first approach.
-              </p>
-              <div className="flex gap-4">
-                <div className="w-8 h-8 rounded-full bg-zinc-50 flex items-center justify-center text-zinc-400 hover:text-zinc-900 cursor-pointer transition-colors">
-                  <span className="material-symbols-outlined text-lg">public</span>
-                </div>
-                <div className="w-8 h-8 rounded-full bg-zinc-50 flex items-center justify-center text-zinc-400 hover:text-zinc-900 cursor-pointer transition-colors">
-                  <span className="material-symbols-outlined text-lg">mail</span>
-                </div>
-                <div className="w-8 h-8 rounded-full bg-zinc-50 flex items-center justify-center text-zinc-400 hover:text-zinc-900 cursor-pointer transition-colors">
-                  <span className="material-symbols-outlined text-lg">alternate_email</span>
-                </div>
-              </div>
+      <Footer />
+
+      {/* App Coming Soon Modal */}
+      {showAppModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+          <div 
+            className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm animate-fade-in" 
+            onClick={() => setShowAppModal(false)}
+          ></div>
+          <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-8 md:p-10 skeuo-card relative z-10 animate-scale-in">
+            <button 
+              onClick={() => setShowAppModal(false)} 
+              className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full hover:bg-zinc-100 text-zinc-400 hover:text-zinc-900 transition-colors"
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+            
+            <div className="w-20 h-20 bg-yellow-100 rounded-3xl flex items-center justify-center mb-8 mx-auto">
+              <span className="material-symbols-outlined text-yellow-600 text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>install_mobile</span>
             </div>
 
-            {/* Company */}
-            <div>
-              <h4 className="font-bold text-zinc-900 mb-6 uppercase tracking-wider text-xs">Company</h4>
-              <ul className="space-y-4">
-                <li><a href="#" className="text-zinc-500 hover:text-zinc-900 text-sm transition-colors">About Us</a></li>
-                <li><a href="#" className="text-zinc-500 hover:text-zinc-900 text-sm transition-colors">Careers</a></li>
-                <li><a href="#" className="text-zinc-500 hover:text-zinc-900 text-sm transition-colors">Blog</a></li>
-                <li><a href="#" className="text-zinc-500 hover:text-zinc-900 text-sm transition-colors">Press</a></li>
-              </ul>
-            </div>
-
-            {/* Services */}
-            <div>
-              <h4 className="font-bold text-zinc-900 mb-6 uppercase tracking-wider text-xs">Services</h4>
-              <ul className="space-y-4">
-                <li><a href="#" className="text-zinc-500 hover:text-zinc-900 text-sm transition-colors">Bike Taxi</a></li>
-                <li><a href="#" className="text-zinc-500 hover:text-zinc-900 text-sm transition-colors">Auto</a></li>
-                <li><a href="#" className="text-zinc-500 hover:text-zinc-900 text-sm transition-colors">CabSync</a></li>
-                <li><a href="#" className="text-zinc-500 hover:text-zinc-900 text-sm transition-colors">Rentals</a></li>
-              </ul>
-            </div>
-
-            {/* Support */}
-            <div>
-              <h4 className="font-bold text-zinc-900 mb-6 uppercase tracking-wider text-xs">Support</h4>
-              <ul className="space-y-4">
-                <li><a href="#" className="text-zinc-500 hover:text-zinc-900 text-sm transition-colors">Safety</a></li>
-                <li><a href="#" className="text-zinc-500 hover:text-zinc-900 text-sm transition-colors">Help Center</a></li>
-                <li><a href="#" className="text-zinc-500 hover:text-zinc-900 text-sm transition-colors">Contact Us</a></li>
-                <li><a href="#" className="text-zinc-500 hover:text-zinc-900 text-sm transition-colors">Lost & Found</a></li>
-              </ul>
-            </div>
-
-            {/* Legal */}
-            <div>
-              <h4 className="font-bold text-zinc-900 mb-6 uppercase tracking-wider text-xs">Legal</h4>
-              <ul className="space-y-4">
-                <li><a href="#" className="text-zinc-500 hover:text-zinc-900 text-sm transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="text-zinc-500 hover:text-zinc-900 text-sm transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="text-zinc-500 hover:text-zinc-900 text-sm transition-colors">Data Usage</a></li>
-                <li><a href="#" className="text-zinc-500 hover:text-zinc-900 text-sm transition-colors">CSR</a></li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Bottom Row */}
-          <div className="pt-8 border-t border-zinc-100 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-zinc-400 text-xs">
-              © 2024 CabSync Technologies. All rights reserved.
+            <h2 className="text-3xl font-black text-zinc-900 mb-4 tracking-tight text-center">
+              Mobile App Coming Soon!
+            </h2>
+            
+            <p className="text-zinc-500 text-center mb-8 leading-relaxed">
+              We're hard at work on our native apps. For the best experience right now, add CabSync to your home screen!
             </p>
-            <div className="flex gap-8">
-              <a href="#" className="text-zinc-400 hover:text-zinc-900 text-xs transition-colors">Cookie Policy</a>
-              <a href="#" className="text-zinc-400 hover:text-zinc-900 text-xs transition-colors">Sitemap</a>
+
+            <div className="space-y-4 mb-10">
+              <div className="flex items-start gap-4 p-4 bg-zinc-50 rounded-2xl">
+                <span className="material-symbols-outlined text-zinc-400 mt-0.5">apple</span>
+                <div>
+                  <h4 className="font-bold text-zinc-900 text-sm">On iOS / Safari</h4>
+                  <p className="text-zinc-500 text-xs mt-1">Tap the <span className="font-bold">Share</span> button and select <span className="font-bold">"Add to Home Screen"</span></p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4 p-4 bg-zinc-50 rounded-2xl">
+                <span className="material-symbols-outlined text-zinc-400 mt-0.5">android</span>
+                <div>
+                  <h4 className="font-bold text-zinc-900 text-sm">On Android / Chrome</h4>
+                  <p className="text-zinc-500 text-xs mt-1">Tap the <span className="font-bold">Menu (3 dots)</span> and select <span className="font-bold">"Install App"</span> or <span className="font-bold">"Add to Home Screen"</span></p>
+                </div>
+              </div>
             </div>
+
+            <button 
+              onClick={() => setShowAppModal(false)}
+              className="w-full py-4 bg-zinc-900 text-[#FFD100] font-black rounded-2xl shadow-xl hover:bg-zinc-800 transition-all active:scale-95"
+            >
+              Got it, thanks!
+            </button>
           </div>
         </div>
-      </footer>
+      )}
     </div>
   );
 };

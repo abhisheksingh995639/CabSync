@@ -162,6 +162,25 @@ const RideDetails = () => {
     );
   };
 
+  const handleShare = async () => {
+    const shareData = {
+      title: 'Join my CabSync ride!',
+      text: `Join my ride from ${ride.pickup} to ${ride.destination} on ${ride.date}!`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        showNotification('Link Copied', 'Ride link copied to clipboard!');
+      }
+    } catch (err) {
+      console.error("Error sharing:", err);
+    }
+  };
+
   if (loading) return <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>;
   if (!ride) return <div className="text-center py-20">Ride not found.</div>;
 
@@ -170,177 +189,209 @@ const RideDetails = () => {
   const isPending = myRequest?.status === 'pending';
 
   return (
-    <main className="max-w-7xl mx-auto px-6 py-8 animate-fade-in mb-20 md:mb-0">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Header / Banner */}
-        <div className="lg:col-span-12">
-          <div className={`p-6 rounded-2xl flex items-center justify-between ${isHost ? 'bg-zinc-900 text-white' : 'bg-primary-container text-text-primary'}`}>
-            <div className="flex items-center gap-4">
-              <span className="material-symbols-outlined text-4xl">
-                {isHost ? 'admin_panel_settings' : 'commute'}
-              </span>
-              <div>
-                <h1 className="text-2xl font-black uppercase tracking-tight">{isHost ? 'Host View' : 'Ride Details'}</h1>
-                <p className="opacity-80 text-sm">{isHost ? 'You are managing this ride' : `Organized by ${ride.hostName}`}</p>
+    <main className="max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-16 animate-fade-in mb-24 lg:mb-0">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12">
+        
+        {/* Left Column: Journey & People */}
+        <div className="lg:col-span-7 space-y-8 md:space-y-12">
+          
+          {/* Journey Header */}
+          <section className="bg-white rounded-[2.5rem] md:rounded-[3rem] p-8 md:p-12 skeuo-card relative overflow-hidden">
+            <div className="flex justify-between items-start mb-10 md:mb-12">
+              <div className="flex items-center gap-4 md:gap-6">
+                <div className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center ${isHost ? 'bg-zinc-900 text-[#FFD100]' : 'bg-[#FFD100] text-zinc-900'}`}>
+                  <span className="material-symbols-outlined text-3xl md:text-4xl">{isHost ? 'admin_panel_settings' : 'commute'}</span>
+                </div>
+                <div>
+                  <h1 className="font-black text-2xl md:text-4xl text-zinc-900 tracking-tight leading-tight">{isHost ? 'Your Ride' : 'Ride Details'}</h1>
+                  <p className="text-zinc-400 font-medium text-xs md:text-base">Trip ID: #{ride.id.slice(-6).toUpperCase()}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${
+                  (ride.status || 'open') === 'open' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'
+                }`}>
+                  {ride.status || 'open'}
+                </span>
+                <button 
+                  onClick={handleShare}
+                  className="w-10 h-10 rounded-xl bg-white border border-zinc-100 flex items-center justify-center text-zinc-400 hover:text-zinc-900 transition-all active:scale-90"
+                  title="Share Ride"
+                >
+                  <span className="material-symbols-outlined text-[20px]">share</span>
+                </button>
               </div>
             </div>
-            {isHost && (
-              <span className="bg-white/10 px-4 py-1 rounded-full text-xs font-bold border border-white/20">OWNER</span>
-            )}
-          </div>
-        </div>
 
-        {/* Left Column: Route Details */}
-        <div className="lg:col-span-7 space-y-6">
-          <section className="bg-white rounded-2xl p-8 shadow-md border border-border-subtle overflow-hidden relative">
-            <div className="absolute top-0 right-0 p-4">
-              <span className={`px-4 py-1.5 rounded-full text-xs font-bold ${
-                (ride.status || 'open') === 'open' ? 'bg-accent-light text-text-primary' : 'bg-red-100 text-red-700'
-              }`}>
-                {(ride.status || 'open').toUpperCase()}
-              </span>
-            </div>
-            <h2 className="font-h3 text-h3 mb-8">Journey Path</h2>
-            <div className="space-y-12 relative">
-              <div className="absolute left-[15px] top-4 bottom-4 w-0.5 bg-zinc-100"></div>
-              <div className="flex items-start gap-6 relative">
-                <div className="z-10 bg-primary w-8 h-8 rounded-full flex items-center justify-center border-4 border-white shadow-md">
-                  <div className="w-2 h-2 bg-white rounded-full"></div>
+            <div className="space-y-10 relative ml-4 md:ml-6">
+              <div className="absolute left-[15px] top-6 bottom-6 w-0.5 bg-zinc-100"></div>
+              
+              <div className="flex items-start gap-8 relative z-10">
+                <div className="w-8 h-8 rounded-full bg-white skeuo-card flex items-center justify-center text-zinc-400 border-none">
+                  <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>location_on</span>
                 </div>
-                <div>
-                  <p className="text-xs font-label-caps text-secondary mb-1">PICKUP POINT</p>
-                  <p className="text-xl font-bold text-text-primary">{ride.pickup}</p>
-                  <p className="text-sm text-secondary mt-1">{ride.date} • {formatTime12h(ride.time)}</p>
+                <div className="flex-1">
+                  <p className="text-[10px] font-black text-zinc-300 uppercase tracking-widest leading-none mb-2">Pickup Point</p>
+                  <p className="font-black text-xl md:text-2xl text-zinc-900 leading-tight mb-1">{ride.pickup}</p>
+                  <p className="text-sm font-medium text-zinc-500">{ride.date} • {formatTime12h(ride.time)}</p>
                 </div>
               </div>
-              <div className="flex items-start gap-6 relative">
-                <div className="z-10 bg-zinc-900 w-8 h-8 rounded-full flex items-center justify-center border-4 border-white shadow-md">
-                  <span className="material-symbols-outlined text-sm text-white">location_on</span>
+
+              <div className="flex items-start gap-8 relative z-10">
+                <div className="w-8 h-8 rounded-full bg-zinc-900 flex items-center justify-center text-[#FFD100] shadow-lg">
+                  <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>map</span>
                 </div>
-                <div>
-                  <p className="text-xs font-label-caps text-secondary mb-1">FINAL DESTINATION</p>
-                  <p className="text-xl font-bold text-text-primary">{ride.destination}</p>
+                <div className="flex-1">
+                  <p className="text-[10px] font-black text-zinc-300 uppercase tracking-widest leading-none mb-2">Final Destination</p>
+                  <p className="font-black text-xl md:text-2xl text-zinc-900 leading-tight">{ride.destination}</p>
                 </div>
               </div>
             </div>
           </section>
 
-          {/* Passenger List (Visible to Host or Approved Passengers) */}
+          {/* Passenger List */}
           {(isHost || isApproved) && (
-            <section className="bg-white rounded-2xl p-8 shadow-md border border-border-subtle">
-              <h2 className="font-h3 text-h3 mb-6">Confirmed Passengers</h2>
-              <div className="flex flex-wrap gap-4">
+            <section className="bg-white rounded-[2.5rem] p-8 md:p-10 skeuo-card">
+              <h2 className="font-black text-xl text-zinc-900 mb-8 flex items-center gap-3">
+                <span className="material-symbols-outlined text-[#FFD100]">group</span>
+                Confirmed Passengers
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {ride.passengers?.length > 0 ? (
                   ride.passengers.map((pId, i) => (
-                    <div key={i} className="flex items-center gap-3 bg-zinc-50 p-2 pr-4 rounded-full border border-zinc-100">
-                      <img className="w-10 h-10 rounded-full object-cover" src={passengerDetails[pId]?.photoUrl || `https://i.pravatar.cc/100?u=${pId}`} alt="Passenger" />
-                      <span className="text-sm font-bold">{passengerDetails[pId]?.name || `User #${pId.slice(0, 4)}`}</span>
+                    <div key={i} className="flex items-center gap-4 bg-zinc-50 p-3 rounded-2xl border border-zinc-100 hover:bg-zinc-100 transition-all group">
+                      <img className="w-12 h-12 rounded-xl object-cover skeuo-card border-none" src={passengerDetails[pId]?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(passengerDetails[pId]?.name || 'P')}&background=FFD100&color=000000`} alt="Passenger" />
+                      <div className="min-w-0">
+                        <p className="font-black text-sm text-zinc-900 truncate">{passengerDetails[pId]?.name || `User #${pId.slice(0, 4)}`}</p>
+                        <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Passenger</p>
+                      </div>
                     </div>
                   ))
                 ) : (
-                  <p className="text-secondary italic">No passengers confirmed yet.</p>
+                  <div className="col-span-full py-8 text-center bg-zinc-50 rounded-[2rem] border-dashed border-2 border-zinc-100">
+                    <p className="text-zinc-400 font-black text-xs uppercase tracking-widest">No passengers yet</p>
+                  </div>
                 )}
               </div>
             </section>
           )}
         </div>
 
-        {/* Right Column: Actions & Meta */}
-        <div className="lg:col-span-5 space-y-6">
-          {/* Fare Card */}
-          <div className="bg-white p-8 rounded-2xl shadow-md border border-border-subtle flex flex-col items-center text-center">
-            <span className="font-label-caps text-secondary uppercase tracking-widest text-xs mb-2">Estimated Total Fare</span>
-            <p className="text-5xl font-black text-primary mb-2">₹{ride.fare}</p>
-            <p className="text-sm text-secondary">Split between {ride.passengers?.length + 1} people</p>
-            <div className="w-full h-px bg-zinc-100 my-6"></div>
-            <div className="flex justify-between w-full">
-              <div className="text-left">
-                <p className="text-[10px] text-secondary uppercase font-bold">Seats Total</p>
-                <p className="text-lg font-bold">{ride.seats}</p>
+        {/* Right Column: Economics & Actions */}
+        <div className="lg:col-span-5 space-y-8">
+          
+          {/* Fare Economics */}
+          <div className="bg-zinc-900 rounded-[2.5rem] md:rounded-[3rem] p-10 md:p-12 text-white shadow-2xl relative overflow-hidden group">
+            <div className="absolute -top-12 -right-12 w-32 h-32 bg-[#FFD100]/10 rounded-full blur-3xl group-hover:bg-[#FFD100]/20 transition-all duration-700"></div>
+            
+            <div className="text-center mb-10">
+              <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-4">Estimated Your Split</p>
+              <div className="flex items-center justify-center gap-1">
+                <span className="text-2xl font-black text-[#FFD100] mt-4">₹</span>
+                <span className="text-6xl md:text-7xl font-black text-[#FFD100] tracking-tighter">
+                  {Math.round((ride.fare || 0) / ((ride.passengers?.length || 0) + 1))}
+                </span>
               </div>
-              <div className="text-right">
-                <p className="text-[10px] text-secondary uppercase font-bold">Available</p>
-                <p className="text-lg font-bold text-primary">{ride.availableSeats}</p>
+              <p className="text-xs font-black text-white/30 uppercase tracking-widest mt-2">Paid directly to host</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-8 pt-10 border-t border-white/10">
+              <div className="text-center">
+                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Total Ride Fare</p>
+                <p className="text-xl font-black">₹{ride.fare}</p>
+              </div>
+              <div className="text-center border-l border-white/10">
+                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Available Seats</p>
+                <p className="text-xl font-black text-[#FFD100]">{ride.availableSeats} of {ride.seats}</p>
               </div>
             </div>
           </div>
 
-          {/* Contextual Action Area */}
+          {/* Contextual Actions */}
           <div className="space-y-4">
             {isHost ? (
-              <>
-                <Link to={`/manage-requests/${ride.id}`} className="w-full bg-primary-container text-text-primary py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-accent-light transition-all shadow-lg shadow-primary/10">
-                  <span className="material-symbols-outlined">how_to_reg</span>
+              <div className="flex flex-col gap-4">
+                <Link to={`/manage-requests/${ride.id}`} className="w-full bg-[#FFD100] text-zinc-900 py-5 rounded-2xl font-black text-center shadow-xl hover:bg-yellow-400 transition-all active:scale-[0.98]">
                   Manage Requests
                 </Link>
-                <Link to={`/chat/${ride.id}`} className="w-full bg-zinc-100 text-zinc-900 py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-zinc-200 transition-all">
-                  <span className="material-symbols-outlined">chat</span>
-                  Ride Group Chat
+                <Link to={`/chat/${ride.id}`} className="w-full bg-white border border-zinc-100 text-zinc-900 py-5 rounded-2xl font-black text-center skeuo-card border-none hover:bg-zinc-50 transition-all active:scale-[0.98]">
+                  Open Group Chat
                 </Link>
-                <button onClick={handleCancelRide} className="w-full text-error font-bold py-2 hover:underline">
-                  Cancel this Ride
+                <button onClick={handleCancelRide} className="text-red-500 font-black text-xs uppercase tracking-widest hover:text-red-600 transition-colors py-2 mx-auto w-max">
+                  Cancel Entire Ride
                 </button>
-              </>
+              </div>
             ) : (
-              <>
+              <div className="flex flex-col gap-4">
                 {isApproved ? (
                   <>
-                    <div className="bg-green-50 border border-green-200 p-4 rounded-xl flex items-center gap-3 text-green-700">
-                      <span className="material-symbols-outlined">check_circle</span>
-                      <p className="font-bold text-sm">Your spot is confirmed!</p>
+                    <div className="bg-green-50 border border-green-100 p-6 rounded-[2rem] flex items-center gap-4 text-green-700">
+                      <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                        <span className="material-symbols-outlined text-green-600">check_circle</span>
+                      </div>
+                      <div>
+                        <p className="font-black text-sm uppercase tracking-tight">Booking Confirmed</p>
+                        <p className="text-xs font-medium opacity-80">You are ready to go!</p>
+                      </div>
                     </div>
-                    <Link to={`/chat/${ride.id}`} className="w-full bg-primary-container text-text-primary py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-accent-light transition-all shadow-lg">
-                      <span className="material-symbols-outlined">chat</span>
-                      Chat with Group
+                    <Link to={`/chat/${ride.id}`} className="w-full bg-zinc-900 text-[#FFD100] py-5 rounded-2xl font-black text-center shadow-xl hover:bg-zinc-800 transition-all active:scale-[0.98]">
+                      Start Chatting
                     </Link>
-                    <button onClick={handleLeaveRide} className="w-full text-error font-bold py-2 hover:underline text-sm">
-                      Leave this Ride
+                    <button onClick={handleLeaveRide} className="text-red-500 font-black text-[10px] uppercase tracking-widest hover:text-red-600 transition-colors pt-2">
+                      Leave Ride
                     </button>
                   </>
                 ) : isPending ? (
-                  <div className="bg-surface-container-low border border-border-subtle p-6 rounded-xl text-center space-y-4">
-                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm">
-                      <span className="material-symbols-outlined text-primary animate-pulse">hourglass_top</span>
+                  <div className="bg-white rounded-[2rem] p-8 skeuo-card text-center space-y-6">
+                    <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center mx-auto text-zinc-300">
+                      <span className="material-symbols-outlined text-3xl animate-pulse">hourglass_top</span>
                     </div>
                     <div>
-                      <p className="font-bold">Request Pending</p>
-                      <p className="text-xs text-secondary mt-1">The host will review your request shortly.</p>
+                      <p className="font-black text-zinc-900 text-lg mb-1 tracking-tight">Request Pending</p>
+                      <p className="text-xs font-medium text-zinc-400">The host is reviewing your request.</p>
                     </div>
-                    <button onClick={handleLeaveRide} className="text-secondary text-xs hover:underline">Withdraw Request</button>
+                    <button onClick={handleLeaveRide} className="text-zinc-400 font-black text-[10px] uppercase tracking-widest hover:text-zinc-900 transition-all">Withdraw Request</button>
                   </div>
                 ) : (
                   <button 
                     onClick={handleJoinRequest}
                     disabled={processing || ride.availableSeats === 0 || ride.status !== 'open'}
-                    className="w-full bg-primary-container text-text-primary py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-accent-light transition-all shadow-xl shadow-primary/20 disabled:opacity-50"
+                    className="w-full bg-[#FFD100] text-zinc-900 py-6 rounded-2xl font-black text-lg shadow-2xl hover:bg-yellow-400 transition-all active:scale-[0.98] disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
                   >
-                    <span className="material-symbols-outlined">handshake</span>
-                    {ride.status !== 'open' ? 'Ride Closed' : (ride.availableSeats === 0 ? 'Ride Full' : (processing ? 'Requesting...' : 'Request to Join'))}
+                    {ride.status !== 'open' ? 'Ride Closed' : (ride.availableSeats === 0 ? 'Ride Full' : (processing ? 'Processing...' : 'Request to Join'))}
                   </button>
                 )}
-              </>
+              </div>
             )}
           </div>
 
-          {/* Host Profile (Always visible for passengers, or "You" for host) */}
-          <section className="bg-white rounded-2xl p-6 border border-border-subtle shadow-sm">
-            <h4 className="text-xs font-label-caps text-secondary mb-4 uppercase">Ride Organizer</h4>
-            <div className="flex items-center gap-4">
-              <img 
-                className="w-14 h-14 rounded-full object-cover border-2 border-primary-container" 
-                src={ride.hostPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(ride.hostName)}&background=FFD100&color=000000`} 
-                onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(ride.hostName)}&background=FFD100&color=000000` }}
-                alt="Host" 
-              />
+          {/* Host Info */}
+          <section className="bg-white rounded-[2.5rem] p-8 skeuo-card">
+            <h4 className="text-[10px] font-black text-zinc-300 uppercase tracking-widest mb-6">Ride Organizer</h4>
+            <div className="flex items-center gap-5">
+              <div className="relative">
+                <img 
+                  className="w-16 h-16 md:w-20 md:h-20 rounded-2xl object-cover skeuo-card border-none" 
+                  src={ride.hostPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(ride.hostName)}&background=FFD100&color=000000`} 
+                  onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(ride.hostName)}&background=FFD100&color=000000` }}
+                  alt="Host" 
+                />
+                <div className="absolute -bottom-1 -right-1 bg-[#FFD100] text-zinc-900 p-1 rounded-full shadow-md border-2 border-white">
+                  <span className="material-symbols-outlined text-[12px] font-black" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
+                </div>
+              </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold truncate">{isHost ? 'You (Host)' : ride.hostName}</p>
-                <div className="flex items-center text-primary text-xs gap-1">
-                  <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                  <span className="font-bold">{isHost ? (userProfile?.rating || '5.0') : '4.9'}</span>
+                <p className="font-black text-lg text-zinc-900 truncate leading-tight mb-1">{isHost ? 'You (Host)' : ride.hostName}</p>
+                <div className="flex items-center gap-2">
+                  <div className="flex text-[#FFD100]">
+                    <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                  </div>
+                  <span className="font-black text-xs text-zinc-700">{isHost ? (userProfile?.rating || '5.0') : '4.9'}</span>
+                  <span className="text-[10px] font-black text-zinc-300 uppercase tracking-widest">• Trusted Host</span>
                 </div>
               </div>
               {!isHost && (
-                <button className="text-primary font-bold text-sm hover:underline">View Profile</button>
+                <Link to={`/profile/${ride.hostId}`} className="text-[#FFD100] font-black text-[10px] uppercase tracking-widest hover:text-yellow-600 transition-all">Profile</Link>
               )}
             </div>
           </section>

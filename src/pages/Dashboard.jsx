@@ -131,7 +131,7 @@ const Dashboard = () => {
 
             {/* Search Form */}
             <form onSubmit={handleSearch} className="bg-white rounded-2xl md:rounded-[2rem] skeuo-card p-4 md:p-6 max-w-xl">
-              <div className="grid grid-cols-2 gap-2 md:gap-3 mb-2 md:mb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3 mb-2 md:mb-3">
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-300 text-base">location_on</span>
                   <input
@@ -298,6 +298,10 @@ const Dashboard = () => {
             <span className="material-symbols-outlined text-[#FFD100] text-xl md:text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>history</span>
             Request Status
           </h2>
+          <Link to="/my-joined-rides" className="text-[#FFD100] font-black text-xs md:text-sm hover:text-yellow-600 transition-colors flex items-center gap-0.5">
+            View all
+            <span className="material-symbols-outlined text-base">chevron_right</span>
+          </Link>
         </div>
 
         {myRequests.length > 0 ? (

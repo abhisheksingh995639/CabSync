@@ -90,61 +90,73 @@ const EditProfile = () => {
           </section>
           {/* Input Fields Grid */}
           <section className="bg-background-primary rounded-xl p-xl shadow-md border border-border-subtle">
-            <form className="space-y-xl" onSubmit={handleSubmit}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-xl">
-                {/* Full Name */}
-                <div className="flex flex-col gap-sm">
-                  <label className="font-label-caps text-label-caps text-text-secondary uppercase">Full Name</label>
-                  <input 
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="w-full bg-background-primary border-border-subtle border-2 rounded-lg px-md py-3 focus:outline-none focus:border-primary-container text-text-primary font-body-md transition-all" 
-                    type="text" 
-                    required
-                  />
-                </div>
-                {/* Phone Number */}
-                <div className="flex flex-col gap-sm">
-                  <label className="font-label-caps text-label-caps text-text-secondary uppercase">Phone Number</label>
-                  <div className="relative">
-                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">call</span>
+            <form className="space-y-10" onSubmit={handleSubmit}>
+              <div className="flex flex-col md:flex-row gap-8 md:gap-12 animate-fade-in">
+                {/* Inputs Column */}
+                <div className="flex flex-col gap-8 md:w-[40%]">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Full Name</label>
                     <input 
-                      name="phone"
-                      value={formData.phone}
+                      name="name"
+                      value={formData.name}
                       onChange={handleChange}
-                      className="w-full bg-background-primary border-border-subtle border-2 rounded-lg pl-10 pr-md py-3 focus:outline-none focus:border-primary-container text-text-primary font-body-md transition-all" 
-                      type="tel" 
+                      className="w-full bg-white border border-zinc-100 rounded-2xl px-6 py-4 skeuo-input-tactile focus:ring-4 focus:ring-yellow-400/10 outline-none text-zinc-900 font-black text-sm transition-all" 
+                      type="text" 
+                      required
+                      placeholder="Your full name"
                     />
                   </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Phone Number</label>
+                    <div className="relative">
+                      <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-zinc-300">call</span>
+                      <input 
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        className="w-full bg-white border border-zinc-100 rounded-2xl pl-14 pr-6 py-4 skeuo-input-tactile focus:ring-4 focus:ring-yellow-400/10 outline-none text-zinc-900 font-black text-sm transition-all" 
+                        type="tel" 
+                        placeholder="+91 00000 00000"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bio Column */}
+                <div className="flex-1 flex flex-col gap-2">
+                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Your Bio</label>
+                  <textarea 
+                    name="bio"
+                    value={formData.bio}
+                    onChange={handleChange}
+                    className="w-full flex-grow bg-white border border-zinc-100 rounded-[2rem] px-6 py-5 skeuo-input-tactile focus:ring-4 focus:ring-yellow-400/10 outline-none text-zinc-900 font-black text-sm transition-all resize-none min-h-[180px]" 
+                    rows="4"
+                    maxLength="250"
+                    placeholder="Tell us a bit about yourself..."
+                  ></textarea>
+                  <p className="text-right text-[9px] font-black text-zinc-300 uppercase tracking-widest mr-2">{formData.bio.length} / 250 characters</p>
                 </div>
               </div>
-              {/* Bio */}
-              <div className="flex flex-col gap-sm">
-                <label className="font-label-caps text-label-caps text-text-secondary uppercase">Bio</label>
-                <textarea 
-                  name="bio"
-                  value={formData.bio}
-                  onChange={handleChange}
-                  className="w-full bg-background-primary border-border-subtle border-2 rounded-lg px-md py-3 focus:outline-none focus:border-primary-container text-text-primary font-body-md transition-all resize-none" 
-                  rows="4"
-                  maxLength="250"
-                ></textarea>
-                <p className="text-right text-xs text-text-secondary">{formData.bio.length} / 250 characters</p>
-              </div>
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-center gap-md pt-md">
+
+              <div className="flex flex-col sm:flex-row items-center gap-4 pt-8">
                 <button 
                   disabled={loading}
-                  className="w-full sm:w-auto bg-primary-container text-text-primary px-xl py-4 rounded-full font-h3 text-body-lg hover:bg-accent-light transition-all active:scale-95 shadow-md flex items-center justify-center gap-2 disabled:opacity-50" 
+                  className="w-full sm:flex-1 bg-zinc-900 text-[#FFD100] py-5 rounded-2xl font-black shadow-xl hover:bg-zinc-800 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50" 
                   type="submit"
                 >
-                  {loading ? 'Saving...' : 'Save Changes'}
+                  {loading ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#FFD100]"></div>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined font-black">save</span>
+                      Save Changes
+                    </>
+                  )}
                 </button>
                 <button 
                   type="button"
                   onClick={() => navigate('/profile')}
-                  className="w-full sm:w-auto bg-transparent border-2 border-border-subtle text-text-secondary px-xl py-4 rounded-full font-h3 text-body-lg hover:bg-zinc-50 transition-all active:scale-95 flex items-center justify-center"
+                  className="w-full sm:w-auto bg-white border border-zinc-100 text-zinc-400 px-10 py-5 rounded-2xl font-black hover:bg-zinc-50 transition-all active:scale-[0.98]"
                 >
                   Cancel
                 </button>

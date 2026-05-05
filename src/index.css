@@ -182,6 +182,33 @@
   animation: marquee 20s linear infinite;
 }
 
+/* Global Progress Bar Animation */
+@keyframes navProgress {
+  0% { width: 0%; opacity: 1; }
+  80% { width: 90%; opacity: 1; }
+  100% { width: 100%; opacity: 0; }
+}
+
+/* Premium Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F5F5F0;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D6D6D6;
+  border-radius: 10px;
+  border: 2px solid #F5F5F0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #B2B2B2;
+}
+
 :root {
   /* Palette Colors */
   --color-d6: #D6D6D6;

@@ -183,6 +183,26 @@ const ManageRequests = () => {
     );
   };
 
+  const handleShare = async () => {
+    const rideUrl = `${window.location.origin}/ride/${ride.id}`;
+    const shareData = {
+      title: 'Join my CabSync ride!',
+      text: `Join my ride from ${ride.pickup} to ${ride.destination} on ${ride.date}!`,
+      url: rideUrl,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(rideUrl);
+        showNotification('Link Copied', 'Invite link copied to clipboard!');
+      }
+    } catch (err) {
+      console.error("Error sharing:", err);
+    }
+  };
+
   if (loading) return <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>;
   if (!ride) return <div className="text-center py-20">Ride not found.</div>;
 
@@ -194,14 +214,23 @@ const ManageRequests = () => {
           <h1 className="font-h1 text-h1 text-zinc-900 mb-xs">Manage Ride</h1>
           <p className="font-body-md text-body-md text-secondary">Review requests and manage your journey to <span className="font-bold text-primary">{ride.destination}</span>.</p>
         </div>
-        <div className="flex items-center gap-4">
-          <Link
-            to={`/chat/${ride.id}`}
-            className="px-6 py-2.5 bg-zinc-900 text-[#FFD100] font-black rounded-xl hover:bg-zinc-800 transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95"
-          >
-            <span className="material-symbols-outlined text-sm">chat</span>
-            Chat
-          </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={handleShare}
+              className="px-4 md:px-6 py-2.5 bg-white border border-zinc-100 text-zinc-900 font-black rounded-xl hover:bg-zinc-50 transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95"
+            >
+              <span className="material-symbols-outlined text-sm">share</span>
+              <span className="hidden md:inline">Share</span>
+            </button>
+            <Link
+              to={`/chat/${ride.id}`}
+              className="px-6 py-2.5 bg-zinc-900 text-[#FFD100] font-black rounded-xl hover:bg-zinc-800 transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95"
+            >
+              <span className="material-symbols-outlined text-sm">chat</span>
+              Chat
+            </Link>
+          </div>
           <div className="bg-[#FFD100] px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-sm border border-zinc-200/50">
             <span className="material-symbols-outlined text-zinc-900 text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>group</span>
             <span className="font-black text-sm text-zinc-900 uppercase tracking-tight">{requests.length} PENDING</span>

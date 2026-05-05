@@ -73,9 +73,9 @@ const Navbar = () => {
           <span className="material-symbols-outlined">group</span>
           <span className="font-['Inter'] text-[10px] font-bold">Joined</span>
         </Link>
-        <Link to="/history" className={mobileNavLinkClass('/history')}>
-          <span className="material-symbols-outlined">history</span>
-          <span className="font-['Inter'] text-[10px] font-bold">History</span>
+        <Link to="/messages" className={mobileNavLinkClass('/messages')}>
+          <span className="material-symbols-outlined">chat</span>
+          <span className="font-['Inter'] text-[10px] font-bold">Messages</span>
         </Link>
       </nav>
     </>

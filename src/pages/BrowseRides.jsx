@@ -110,9 +110,9 @@ const BrowseRides = () => {
           <div className="lg:hidden mt-6 flex justify-center">
             <button 
               onClick={() => setShowFilters(!showFilters)}
-              className="skeuo-button-tactile-light px-6 py-2.5 rounded-xl text-sm font-black flex items-center gap-2 border border-zinc-200"
+              className="skeuo-button-tactile-light px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 border border-zinc-200"
             >
-              <span className="material-symbols-outlined text-lg">{showFilters ? 'close' : 'tune'}</span>
+              <span className="material-symbols-outlined text-base">{showFilters ? 'close' : 'tune'}</span>
               {showFilters ? 'Close Filters' : 'Filter Results'}
             </button>
           </div>
@@ -254,10 +254,10 @@ const BrowseRides = () => {
                 filteredRides.map(ride => (
                   <Link key={ride.id} to={`/ride/${ride.id}`} className="bg-white rounded-2xl md:rounded-[2rem] p-4 md:p-6 lg:p-8 skeuo-card flex flex-col hover:-translate-y-1.5 transition-all duration-500 group">
                     <div className="flex justify-between items-start mb-4 md:mb-8">
-                      <div className="flex items-center gap-3 md:gap-4">
+                      <div className="flex items-center gap-2 md:gap-4">
                         <img 
                           alt={ride.hostName} 
-                          className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl skeuo-card object-cover" 
+                          className="w-8 h-8 md:w-14 md:h-14 rounded-lg md:rounded-2xl skeuo-card object-cover" 
                           src={ride.hostPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(ride.hostName)}&background=FFD100&color=000000`}
                           onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(ride.hostName)}&background=FFD100&color=000000` }}
                         />
@@ -278,8 +278,8 @@ const BrowseRides = () => {
                         </div>
                       </div>
                       <div className="flex flex-col items-end">
-                        <span className="text-xl md:text-3xl font-black text-zinc-900 tracking-tighter">₹{Math.round((ride.fare || 0) / ((ride.passengers?.length || 0) + 1))}</span>
-                        <span className="text-[8px] md:text-[9px] font-black text-zinc-400 uppercase tracking-widest mt-0.5">per person</span>
+                        <span className="text-lg md:text-3xl font-black text-zinc-900 tracking-tighter">₹{Math.round((ride.fare || 0) / ((ride.passengers?.length || 0) + 1))}</span>
+                        <span className="text-[7px] md:text-[9px] font-black text-zinc-400 uppercase tracking-widest mt-0.5">per person</span>
                       </div>
                     </div>
 
@@ -287,8 +287,8 @@ const BrowseRides = () => {
                       {/* Decorative path line */}
                       <div className="absolute left-[13px] md:left-[15px] top-4 bottom-4 w-0.5 bg-zinc-100 group-hover:bg-[#FFD100]/30 transition-colors"></div>
                       
-                      <div className="flex items-center gap-4 md:gap-6 relative z-10">
-                        <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-zinc-50 flex items-center justify-center text-zinc-400 group-hover:bg-white transition-all skeuo-card border-none">
+                      <div className="flex items-center gap-3 md:gap-6 relative z-10">
+                        <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-zinc-50 flex items-center justify-center text-zinc-400 group-hover:bg-white transition-all skeuo-card border-none text-[10px]">
                           <span className="material-symbols-outlined text-xs md:text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>location_on</span>
                         </div>
                         <div className="flex-1">
@@ -297,8 +297,8 @@ const BrowseRides = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-4 md:gap-6 relative z-10">
-                        <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-zinc-900 flex items-center justify-center text-[#FFD100] shadow-lg">
+                      <div className="flex items-center gap-3 md:gap-6 relative z-10">
+                        <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-zinc-900 flex items-center justify-center text-[#FFD100] shadow-lg">
                           <span className="material-symbols-outlined text-xs md:text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>map</span>
                         </div>
                         <div className="flex-1">

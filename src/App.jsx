@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Dashboard from './pages/Dashboard';
@@ -24,23 +25,44 @@ import MyPostedRides from './pages/MyPostedRides';
 import MyJoinedRides from './pages/MyJoinedRides';
 import RateRide from './pages/RateRide';
 
-const ProtectedLayout = () => (
-  <div className="flex flex-col min-h-screen">
-    <Navbar />
-    <div className="flex-grow pb-24 md:pb-0">
-      <Outlet />
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+};
+
+const ProtectedLayout = () => {
+  const { pathname } = useLocation();
+
+  return (
+    <div className="flex flex-col min-h-screen">
+      {/* Global Progress Bar - key triggers re-animation on route change */}
+      <div key={pathname} className="fixed top-0 left-0 right-0 h-1 z-[9999] pointer-events-none">
+        <div 
+          className="h-full bg-[#FFD100] transition-all duration-500 ease-out shadow-[0_0_10px_#FFD100]" 
+          style={{ width: '100%', opacity: 0, animation: 'navProgress 0.6s ease-out' }}
+        ></div>
+      </div>
+      
+      <Navbar />
+      <div className="flex-grow pb-24 md:pb-0">
+        <Outlet />
+      </div>
+      <footer className="hidden md:block">
+        <Footer />
+      </footer>
     </div>
-    <footer className="hidden md:block">
-      <Footer />
-    </footer>
-  </div>
-);
+  );
+};
 
 function App() {
   return (
     <AuthProvider>
       <NotificationProvider>
         <Router>
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
@@ -52,7 +74,7 @@ function App() {
               <Route path="/post" element={<PostRide />} />
               <Route path="/browse" element={<BrowseRides />} />
               <Route path="/ride/:id" element={<RideDetails />} />
-              <Route path="/profile" element={<Profile />} />
+              <Route path="/profile/:id?" element={<Profile />} />
               <Route path="/edit-profile" element={<EditProfile />} />
               <Route path="/history" element={<History />} />
               <Route path="/confirmed-ride/:id" element={<ConfirmedRide />} />
