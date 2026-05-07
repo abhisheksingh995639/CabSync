@@ -3,12 +3,12 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { db } from '../firebase';
-import { collection, query, where, getDocs, orderBy, limit, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, limit, doc, getDoc, updateDoc, addDoc, serverTimestamp, increment } from 'firebase/firestore';
 
 const Profile = () => {
   const { userProfile: currentUserProfile, currentUser, logout } = useAuth();
   const { id } = useParams();
-  const { showConfirm } = useNotification();
+  const { showConfirm, showNotification } = useNotification();
   const navigate = useNavigate();
   
   const targetUserId = id || currentUser?.uid;
@@ -23,6 +23,13 @@ const Profile = () => {
     asRider: 0,
     totalSpent: 0
   });
+  const [activeProfileTab, setActiveProfileTab] = useState('activity');
+
+  const [isRateModalOpen, setIsRateModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [selectedRating, setSelectedRating] = useState(0);
+  const [reportReason, setReportReason] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   // Fetch target user's profile if not our own
   useEffect(() => {
@@ -108,6 +115,150 @@ const Profile = () => {
     );
   };
 
+  const handleDeactivateAccount = async () => {
+    showConfirm(
+      "Deactivate Account",
+      "Your profile will be hidden from other users. You can reactivate your account anytime by logging back in. Proceed?",
+      async () => {
+        setSubmitting(true);
+        try {
+          await updateDoc(doc(db, 'users', currentUser.uid), {
+             isDeactivated: true,
+             deactivatedAt: serverTimestamp()
+          });
+          
+          await logout();
+          showNotification("Success", "Account deactivated. See you soon!");
+          navigate('/login');
+        } catch (err) {
+          console.error("Deactivate error:", err);
+          showNotification("Error", "Failed to deactivate account.");
+        } finally {
+          setSubmitting(false);
+        }
+      }
+    );
+  };
+
+  const handleDeleteAccount = async () => {
+    showConfirm(
+      "Delete Account",
+      "This action is permanent and cannot be undone. All your ride history and profile data will be deleted. Are you absolutely sure?",
+      async () => {
+        setSubmitting(true);
+        try {
+          // 1. Delete Firestore Data
+          await updateDoc(doc(db, 'users', currentUser.uid), {
+             isDeleted: true,
+             deletedAt: serverTimestamp()
+          });
+
+          // 2. Delete Auth Account
+          await currentUser.delete();
+          
+          showNotification("Success", "Your account has been deleted.");
+          navigate('/signup');
+        } catch (err) {
+          console.error("Delete account error:", err);
+          if (err.code === 'auth/requires-recent-login') {
+            showNotification("Security Check", "Please log out and log back in before deleting your account for security reasons.");
+          } else {
+            showNotification("Error", "Failed to delete account. Please try again later.");
+          }
+        } finally {
+          setSubmitting(false);
+        }
+      }
+    );
+  };
+
+  const handleRateUser = async () => {
+    if (selectedRating === 0) {
+      showNotification("Error", "Please select a star rating.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const userRef = doc(db, 'users', targetUserId);
+      const currentRating = viewedProfile.rating || 0;
+      const currentCount = viewedProfile.reviewsCount || 0;
+      
+      const newCount = currentCount + 1;
+      const newRating = ((currentRating * currentCount) + selectedRating) / newCount;
+
+      await updateDoc(userRef, {
+        rating: newRating,
+        reviewsCount: increment(1)
+      });
+
+      setViewedProfile(prev => ({
+        ...prev,
+        rating: newRating,
+        reviewsCount: newCount
+      }));
+
+      showNotification("Success", "Rating submitted! Thank you.");
+      setIsRateModalOpen(false);
+      setSelectedRating(0);
+    } catch (err) {
+      console.error("Error rating user:", err);
+      showNotification("Error", "Failed to submit rating.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleReportUser = async () => {
+    if (!reportReason.trim()) {
+      showNotification("Error", "Please provide a reason for the report.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await addDoc(collection(db, 'reports'), {
+        targetUserId,
+        targetName: displayName,
+        reporterId: currentUser.uid,
+        reporterName: currentUserProfile?.name || 'Anonymous',
+        reason: reportReason,
+        timestamp: serverTimestamp(),
+        status: 'pending'
+      });
+
+      showNotification("Success", "Report submitted. We will review it shortly.");
+      setIsReportModalOpen(false);
+      setReportReason('');
+    } catch (err) {
+      console.error("Error reporting user:", err);
+      showNotification("Error", "Failed to submit report.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const updateSetting = async (key, value) => {
+    try {
+      const newSettings = {
+        ...(viewedProfile?.privacySettings || {}),
+        [key]: value
+      };
+      const userRef = doc(db, 'users', targetUserId);
+      await updateDoc(userRef, {
+        privacySettings: newSettings
+      });
+      setViewedProfile(prev => ({
+        ...prev,
+        privacySettings: newSettings
+      }));
+      showNotification("Success", "Setting updated.");
+    } catch (err) {
+      console.error("Error updating setting:", err);
+      showNotification("Error", "Failed to update setting.");
+    }
+  };
+
   if (viewedProfile === undefined) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -178,7 +329,7 @@ const Profile = () => {
                       <span className="material-symbols-outlined text-sm">mail</span>
                       {displayEmail}
                     </p>
-                    {viewedProfile?.phone && (
+                    {(!id || viewedProfile?.privacySettings?.showPhone !== 'private') && viewedProfile?.phone && (
                       <p className="text-zinc-400 font-medium text-xs md:text-sm truncate flex items-center gap-1.5">
                         <span className="material-symbols-outlined text-sm">call</span>
                         {viewedProfile.phone}
@@ -212,7 +363,7 @@ const Profile = () => {
                     )}
                   </div>
                 </div>
-                {isOwnProfile && (
+                {isOwnProfile ? (
                   <div className="flex gap-2 flex-shrink-0">
                     <Link
                       to="/edit-profile"
@@ -229,24 +380,68 @@ const Profile = () => {
                       <span className="hidden sm:inline">Log Out</span>
                     </button>
                   </div>
+                ) : (
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => setIsRateModalOpen(true)}
+                      className="flex items-center gap-1.5 bg-[#FFD100] text-zinc-900 font-black text-xs md:text-sm px-4 py-2.5 rounded-xl hover:bg-yellow-400 transition-all active:scale-95 shadow-lg shadow-yellow-400/20"
+                    >
+                      <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                      <span>Rate</span>
+                    </button>
+                    <button
+                      onClick={() => setIsReportModalOpen(true)}
+                      className="flex items-center gap-1.5 bg-white text-red-500 font-black text-xs md:text-sm px-4 py-2.5 rounded-xl border border-red-100 hover:bg-red-50 transition-all active:scale-95"
+                    >
+                      <span className="material-symbols-outlined text-sm">report</span>
+                      <span>Report</span>
+                    </button>
+                  </div>
                 )}
               </div>
 
               {/* Bio */}
-              <p className="text-zinc-500 font-medium text-xs md:text-sm mt-3 leading-relaxed line-clamp-2">
-                {viewedProfile?.bio || (isOwnProfile ? "No bio added yet. Edit your profile to tell the community about yourself." : "No bio added yet.")}
-              </p>
+              {(isOwnProfile || viewedProfile?.privacySettings?.showBio !== 'private') && (
+                <p className="text-zinc-500 font-medium text-xs md:text-sm mt-3 leading-relaxed line-clamp-2">
+                  {viewedProfile?.bio || (isOwnProfile ? "No bio added yet. Edit your profile to tell the community about yourself." : "No bio added yet.")}
+                </p>
+              )}
 
 
             </div>
           </div>
         </div>
 
+        {/* ── PROFILE TABS ── */}
+        {isOwnProfile && (
+          <div className="flex gap-1 bg-white p-1.5 rounded-2xl skeuo-card mb-6 overflow-x-auto whitespace-nowrap">
+            <button 
+              onClick={() => setActiveProfileTab('activity')}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-sm transition-all ${
+                activeProfileTab === 'activity' ? 'bg-zinc-900 text-[#FFD100] shadow-lg' : 'text-zinc-400 hover:text-zinc-600'
+              }`}
+            >
+              <span className="material-symbols-outlined text-sm">dashboard</span>
+              Activity
+            </button>
+            <button 
+              onClick={() => setActiveProfileTab('settings')}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-sm transition-all ${
+                activeProfileTab === 'settings' ? 'bg-zinc-900 text-[#FFD100] shadow-lg' : 'text-zinc-400 hover:text-zinc-600'
+              }`}
+            >
+              <span className="material-symbols-outlined text-sm">settings</span>
+              Privacy Settings
+            </button>
+          </div>
+        )}
+
         {/* ── STATS + ACTIVITY GRID ── */}
-        <div className={`grid grid-cols-1 ${isOwnProfile ? 'md:grid-cols-3' : 'md:grid-cols-1 max-w-2xl mx-auto w-full'} gap-4 md:gap-6`}>
+        {activeProfileTab === 'activity' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
 
           {/* Ride Stats Card */}
-          <div className="md:col-span-1 bg-white rounded-2xl skeuo-card p-5 md:p-6">
+          <div className="bg-white rounded-2xl skeuo-card p-5 md:p-6 h-full">
             <h3 className="font-black text-base md:text-lg text-zinc-900 mb-4 flex items-center gap-2">
               <span className="material-symbols-outlined text-[#FFD100] text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>analytics</span>
               Ride Stats
@@ -297,8 +492,8 @@ const Profile = () => {
           </div>
 
           {/* History Card - Private */}
-          {isOwnProfile && (
-            <div className="md:col-span-2 bg-white rounded-2xl skeuo-card p-5 md:p-6">
+          {(isOwnProfile || viewedProfile?.privacySettings?.showHistory !== 'private') && (
+            <div className="bg-white rounded-2xl skeuo-card p-5 md:p-6 h-full">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-black text-base md:text-lg text-zinc-900 flex items-center gap-2">
                   <span className="material-symbols-outlined text-[#FFD100] text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>history</span>
@@ -367,7 +562,174 @@ const Profile = () => {
             </div>
           )}
         </div>
+        ) : (
+          /* ── PRIVACY SETTINGS TAB ── */
+          <div className="max-w-3xl space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+             <div className="bg-white rounded-[2.5rem] skeuo-card p-8">
+                <h3 className="text-xl font-black text-zinc-900 mb-2 flex items-center gap-2">
+                   <span className="material-symbols-outlined text-[#FFD100]" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
+                   Privacy Controls
+                </h3>
+                <p className="text-zinc-500 text-sm mb-8 font-medium">Control who can see your personal information on CabSync.</p>
+
+                <div className="space-y-6">
+                   {/* Phone Privacy */}
+                   <div className="p-5 bg-zinc-50 rounded-3xl border border-zinc-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                         <p className="font-black text-zinc-900">Phone Number Visibility</p>
+                         <p className="text-xs text-zinc-500 font-medium">Choose who can see your phone number.</p>
+                      </div>
+                      <select 
+                        value={viewedProfile?.privacySettings?.showPhone || 'public'}
+                        onChange={(e) => updateSetting('showPhone', e.target.value)}
+                        className="bg-white border border-zinc-200 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-[#FFD100]/20"
+                      >
+                         <option value="public">Everyone</option>
+                         <option value="confirmed">Confirmed Passengers</option>
+                         <option value="private">Only Me</option>
+                      </select>
+                   </div>
+
+                   {/* History Privacy */}
+                   <div className="p-5 bg-zinc-50 rounded-3xl border border-zinc-100 flex items-center justify-between gap-4">
+                      <div>
+                         <p className="font-black text-zinc-900">Ride History</p>
+                         <p className="text-xs text-zinc-500 font-medium">Make your past rides visible to others.</p>
+                      </div>
+                      <button 
+                        onClick={() => updateSetting('showHistory', viewedProfile?.privacySettings?.showHistory === 'private' ? 'public' : 'private')}
+                        className={`w-12 h-6 rounded-full transition-all relative ${viewedProfile?.privacySettings?.showHistory !== 'private' ? 'bg-[#FFD100]' : 'bg-zinc-300'}`}
+                      >
+                         <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${viewedProfile?.privacySettings?.showHistory !== 'private' ? 'left-7' : 'left-1'}`} />
+                      </button>
+                   </div>
+
+                   {/* Bio Visibility */}
+                   <div className="p-5 bg-zinc-50 rounded-3xl border border-zinc-100 flex items-center justify-between gap-4">
+                      <div>
+                         <p className="font-black text-zinc-900">Public Profile Bio</p>
+                         <p className="text-xs text-zinc-500 font-medium">Show your bio to other users.</p>
+                      </div>
+                      <button 
+                        onClick={() => updateSetting('showBio', viewedProfile?.privacySettings?.showBio === 'private' ? 'public' : 'private')}
+                        className={`w-12 h-6 rounded-full transition-all relative ${viewedProfile?.privacySettings?.showBio !== 'private' ? 'bg-[#FFD100]' : 'bg-zinc-300'}`}
+                      >
+                         <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${viewedProfile?.privacySettings?.showBio !== 'private' ? 'left-7' : 'left-1'}`} />
+                      </button>
+                   </div>
+
+                   <div className="pt-6 border-t border-zinc-100">
+                      <div className="flex items-start gap-3 bg-blue-50 p-4 rounded-2xl">
+                         <span className="material-symbols-outlined text-blue-500 text-sm mt-0.5">info</span>
+                         <p className="text-xs text-blue-700 font-medium leading-relaxed">
+                            Your safety is our priority. Regardless of these settings, ride hosts and confirmed passengers will always see your essential contact details for safety coordination.
+                         </p>
+                      </div>
+                   </div>
+                </div>
+             </div>
+
+             {/* Danger Zone */}
+             <div className="bg-red-50 rounded-[2.5rem] border border-red-100 p-8">
+                <h3 className="text-xl font-black text-red-600 mb-2 flex items-center gap-2">
+                   <span className="material-symbols-outlined">dangerous</span>
+                   Danger Zone
+                </h3>
+                <p className="text-red-700/60 text-sm mb-6 font-medium">Temporarily hide your profile or permanently remove your data.</p>
+                
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button 
+                    onClick={handleDeactivateAccount}
+                    disabled={submitting}
+                    className="flex-1 bg-white text-red-600 border border-red-200 font-black px-8 py-3 rounded-2xl hover:bg-red-50 transition-all active:scale-95 disabled:opacity-50"
+                  >
+                    {submitting ? 'Processing...' : 'Deactivate Account'}
+                  </button>
+                  <button 
+                    onClick={handleDeleteAccount}
+                    disabled={submitting}
+                    className="flex-1 bg-red-600 text-white font-black px-8 py-3 rounded-2xl hover:bg-red-700 transition-all active:scale-95 disabled:opacity-50"
+                  >
+                    {submitting ? 'Processing...' : 'Delete My Account'}
+                  </button>
+                </div>
+             </div>
+          </div>
+        )}
       </main>
+
+      {/* ── RATE MODAL ── */}
+      {isRateModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-zinc-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in-95 duration-300">
+            <h2 className="text-2xl font-black text-zinc-900 mb-2">Rate {displayName}</h2>
+            <p className="text-zinc-500 text-sm mb-8">How was your journey with this user?</p>
+            
+            <div className="flex justify-center gap-2 mb-10">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setSelectedRating(star)}
+                  className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
+                    selectedRating >= star ? 'bg-[#FFD100] text-zinc-900 shadow-lg shadow-yellow-400/30' : 'bg-zinc-50 text-zinc-300 hover:bg-zinc-100'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: `'FILL' ${selectedRating >= star ? 1 : 0}` }}>star</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <button
+                disabled={submitting}
+                onClick={handleRateUser}
+                className="w-full bg-zinc-900 text-[#FFD100] font-black py-4 rounded-2xl hover:bg-zinc-800 transition-all disabled:opacity-50 active:scale-95"
+              >
+                {submitting ? 'Submitting...' : 'Submit Rating'}
+              </button>
+              <button
+                onClick={() => setIsRateModalOpen(false)}
+                className="w-full bg-zinc-50 text-zinc-400 font-black py-4 rounded-2xl hover:bg-zinc-100 transition-all active:scale-95"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── REPORT MODAL ── */}
+      {isReportModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-zinc-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in-95 duration-300">
+            <h2 className="text-2xl font-black text-zinc-900 mb-2 text-red-600">Report User</h2>
+            <p className="text-zinc-500 text-sm mb-6">Please specify why you are reporting this user. Our team will review it.</p>
+            
+            <textarea
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              placeholder="Ex: No-show, inappropriate behavior, etc."
+              className="w-full p-4 bg-zinc-50 border border-zinc-100 rounded-2xl focus:ring-2 focus:ring-red-100 outline-none font-medium h-32 mb-6"
+            />
+
+            <div className="flex flex-col gap-3">
+              <button
+                disabled={submitting}
+                onClick={handleReportUser}
+                className="w-full bg-red-600 text-white font-black py-4 rounded-2xl hover:bg-red-700 transition-all disabled:opacity-50 active:scale-95"
+              >
+                {submitting ? 'Submitting...' : 'Submit Report'}
+              </button>
+              <button
+                onClick={() => setIsReportModalOpen(false)}
+                className="w-full bg-zinc-50 text-zinc-400 font-black py-4 rounded-2xl hover:bg-zinc-100 transition-all active:scale-95"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

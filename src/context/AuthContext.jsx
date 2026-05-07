@@ -123,9 +123,15 @@ export const AuthProvider = ({ children }) => {
         
         // Use onSnapshot for instant cache access and real-time updates
         const profileRef = doc(db, 'users', user.uid);
-        unsubscribeProfile = onSnapshot(profileRef, (docSnap) => {
+        unsubscribeProfile = onSnapshot(profileRef, async (docSnap) => {
           if (docSnap.exists()) {
-            setUserProfile(docSnap.data());
+            const data = docSnap.data();
+            setUserProfile(data);
+            
+            // Auto-reactivate if deactivated
+            if (data.isDeactivated) {
+              await setDoc(profileRef, { isDeactivated: false }, { merge: true });
+            }
           } else {
             // No profile yet (new user), allow them to see the app
             setUserProfile(null);

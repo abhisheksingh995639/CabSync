@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
+import RestrictedArea from '../components/RestrictedArea';
 
 const NotificationContext = createContext();
 
@@ -13,6 +14,8 @@ export const NotificationProvider = ({ children }) => {
     onConfirm: null,
     onCancel: null
   });
+
+  const [isRestrictedOpen, setIsRestrictedOpen] = useState(false);
 
   const showNotification = (title, message) => {
     setModal({
@@ -43,11 +46,19 @@ export const NotificationProvider = ({ children }) => {
     });
   };
 
-  const closeModal = () => setModal(prev => ({ ...prev, isOpen: false }));
+  const showRestrictedModal = () => setIsRestrictedOpen(true);
+
+  const closeModal = () => {
+    setModal(prev => ({ ...prev, isOpen: false }));
+    setIsRestrictedOpen(false);
+  };
 
   return (
-    <NotificationContext.Provider value={{ showNotification, showConfirm }}>
+    <NotificationContext.Provider value={{ showNotification, showConfirm, showRestrictedModal }}>
       {children}
+      
+      <RestrictedArea isOpen={isRestrictedOpen} onClose={() => setIsRestrictedOpen(false)} />
+
       {modal.isOpen && (
         <>
           {modal.type === 'confirm' ? (

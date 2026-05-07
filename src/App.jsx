@@ -24,6 +24,8 @@ import BookingConfirmation from './pages/BookingConfirmation';
 import MyPostedRides from './pages/MyPostedRides';
 import MyJoinedRides from './pages/MyJoinedRides';
 import RateRide from './pages/RateRide';
+import AdminDashboard from './pages/AdminDashboard';
+
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -86,6 +88,8 @@ function App() {
               <Route path="/my-joined-rides" element={<MyJoinedRides />} />
               <Route path="/rate/:id" element={<RateRide />} />
             </Route>
+
+            <Route path="/admin" element={<ProtectedRoute adminOnly={true}><AdminDashboard /></ProtectedRoute>} />
           </Routes>
         </Router>
       </NotificationProvider>

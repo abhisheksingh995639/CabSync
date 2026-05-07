@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   const [modalContent, setModalContent] = useState(null);
@@ -93,10 +94,10 @@ const Footer = () => {
       <div className="max-w-screen-2xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
 
         <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
-          <div className="flex items-center gap-2">
+          <Link to="/admin" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <div className="w-8 h-8 bg-[#FFD100] rounded flex items-center justify-center font-bold text-zinc-900">c</div>
             <div className="text-2xl font-black text-zinc-900 tracking-tighter">CabSync</div>
-          </div>
+          </Link>
           <p className="text-zinc-400 text-sm font-medium">
             © 2024 CabSync Technologies.
           </p>

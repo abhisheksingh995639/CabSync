@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase';
 import { collection, query, where, onSnapshot, orderBy, limit, deleteDoc, doc } from 'firebase/firestore';
@@ -8,11 +8,12 @@ import { formatTime12h } from '../utils/formatters';
 
 const Dashboard = () => {
   const { currentUser } = useAuth();
-  const { showNotification, showConfirm } = useNotification();
+  const { showNotification, showConfirm, showRestrictedModal } = useNotification();
   const [myRides, setMyRides] = useState([]);
   const [myRequests, setMyRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
   
   const [searchData, setSearchData] = useState({
     pickup: '',
@@ -20,6 +21,15 @@ const Dashboard = () => {
     date: '',
     time: ''
   });
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get('restricted') === 'true') {
+      showRestrictedModal();
+      // Remove the param from URL to prevent re-triggering on refresh
+      navigate('/dashboard', { replace: true });
+    }
+  }, [location, showRestrictedModal, navigate]);
 
   useEffect(() => {
     if (currentUser) {
