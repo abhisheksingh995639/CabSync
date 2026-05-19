@@ -17,7 +17,7 @@ import Home from './pages/Home';
 import ForgotPassword from './pages/ForgotPassword';
 import History from './pages/History';
 import ConfirmedRide from './pages/ConfirmedRide';
-import ManageRequests from './pages/ManageRequests';
+
 import Messages from './pages/Messages';
 import Chat from './pages/Chat';
 import BookingConfirmation from './pages/BookingConfirmation';
@@ -25,6 +25,7 @@ import MyPostedRides from './pages/MyPostedRides';
 import MyJoinedRides from './pages/MyJoinedRides';
 import RateRide from './pages/RateRide';
 import AdminDashboard from './pages/AdminDashboard';
+import { ThemeProvider } from './context/ThemeContext';
 
 
 const ScrollToTop = () => {
@@ -62,37 +63,39 @@ const ProtectedLayout = () => {
 function App() {
   return (
     <AuthProvider>
-      <NotificationProvider>
-        <Router>
-          <ScrollToTop />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
+      <ThemeProvider>
+        <NotificationProvider>
+          <Router>
+            <ScrollToTop />
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
 
-            <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/post" element={<PostRide />} />
-              <Route path="/browse" element={<BrowseRides />} />
-              <Route path="/ride/:id" element={<RideDetails />} />
-              <Route path="/profile/:id?" element={<Profile />} />
-              <Route path="/edit-profile" element={<EditProfile />} />
-              <Route path="/history" element={<History />} />
-              <Route path="/confirmed-ride/:id" element={<ConfirmedRide />} />
-              <Route path="/manage-requests/:id" element={<ManageRequests />} />
-              <Route path="/messages" element={<Messages />} />
-              <Route path="/chat/:id" element={<Chat />} />
-              <Route path="/booking-confirmation/:id" element={<BookingConfirmation />} />
-              <Route path="/my-posted-rides" element={<MyPostedRides />} />
-              <Route path="/my-joined-rides" element={<MyJoinedRides />} />
-              <Route path="/rate/:id" element={<RateRide />} />
-            </Route>
+              <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/post" element={<PostRide />} />
+                <Route path="/browse" element={<BrowseRides />} />
+                <Route path="/ride/:id" element={<RideDetails />} />
+                <Route path="/profile/:id?" element={<Profile />} />
+                <Route path="/edit-profile" element={<EditProfile />} />
+                <Route path="/history" element={<History />} />
+                <Route path="/confirmed-ride/:id" element={<ConfirmedRide />} />
+                <Route path="/manage-requests/:id" element={<RideDetails />} />
+                <Route path="/messages" element={<Messages />} />
+                <Route path="/chat/:id" element={<Chat />} />
+                <Route path="/booking-confirmation/:id" element={<BookingConfirmation />} />
+                <Route path="/my-posted-rides" element={<MyPostedRides />} />
+                <Route path="/my-joined-rides" element={<MyJoinedRides />} />
+                <Route path="/rate/:id" element={<RateRide />} />
+              </Route>
 
-            <Route path="/admin" element={<ProtectedRoute adminOnly={true}><AdminDashboard /></ProtectedRoute>} />
-          </Routes>
-        </Router>
-      </NotificationProvider>
+              <Route path="/admin" element={<ProtectedRoute adminOnly={true}><AdminDashboard /></ProtectedRoute>} />
+            </Routes>
+          </Router>
+        </NotificationProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

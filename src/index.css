@@ -501,3 +501,106 @@ input[type="range"]:focus {
 .animate-scale-in {
   animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
+
+/* Dark Mode Global Styles */
+.dark {
+  color-scheme: dark;
+}
+
+.dark body,
+.dark .bg-\[\#F5F5F0\],
+.dark .bg-background {
+  background-color: #0c0c0e !important;
+  color: #f4f4f5 !important;
+}
+
+.dark .bg-white,
+.dark .bg-background-primary,
+.dark .bg-surface,
+.dark .bg-surface-container,
+.dark .bg-surface-container-low {
+  background-color: #15151a !important;
+}
+
+.dark .bg-surface-container-high {
+  background-color: #1e1e24 !important;
+}
+
+.dark .bg-zinc-50,
+.dark .bg-zinc-100 {
+  background-color: #1e1e24 !important;
+}
+
+.dark .text-zinc-900,
+.dark .text-text-primary,
+.dark .text-zinc-800 {
+  color: #f4f4f5 !important;
+}
+
+.dark .text-zinc-700,
+.dark .text-zinc-600,
+.dark .text-secondary {
+  color: #a1a1aa !important;
+}
+
+.dark .text-zinc-500,
+.dark .text-zinc-400 {
+  color: #71717a !important;
+}
+
+.dark .border-zinc-100,
+.dark .border-zinc-200,
+.dark .border-zinc-50,
+.dark .border-outline-variant,
+.dark .border-border-subtle {
+  border-color: #272730 !important;
+}
+
+.dark header.sticky,
+.dark nav.fixed {
+  background-color: rgba(21, 21, 26, 0.8) !important;
+  border-color: #272730 !important;
+}
+
+.dark .skeuo-card {
+  background: #15151a !important;
+  border-color: #272730 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.dark .skeuo-input-tactile {
+  background: #1e1e24 !important;
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark .skeuo-button-tactile-light {
+  background: #15151a !important;
+  color: #f4f4f5 !important;
+  border-color: #272730 !important;
+  box-shadow: 0 6px 0 0 #0f0f13, 0 12px 24px -6px rgba(0, 0, 0, 0.4) !important;
+}
+
+.dark select,
+.dark input,
+.dark textarea {
+  color: #f4f4f5 !important;
+}
+
+.dark option {
+  background-color: #15151a !important;
+  color: #f4f4f5 !important;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #0c0c0e;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #272730;
+  border-color: #0c0c0e;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+

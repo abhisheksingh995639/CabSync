@@ -1,9 +1,11 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const Navbar = () => {
   const { userProfile } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
 
   const isActive = (path) => {
@@ -43,8 +45,16 @@ const Navbar = () => {
 
 
           <div className="flex items-center gap-2 md:gap-4">
+            <button
+              onClick={toggleTheme}
+              className="material-symbols-outlined text-zinc-500 cursor-pointer hover:bg-zinc-100 hover:text-zinc-900 p-2.5 rounded-full transition-colors"
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+            </button>
             <Link to="/messages" className="material-symbols-outlined text-zinc-500 cursor-pointer hover:bg-zinc-100 hover:text-zinc-900 p-2.5 rounded-full transition-colors hidden sm:block" style={{ fontVariationSettings: "'FILL' 0" }}>chat_bubble</Link>
             <Link to="/profile" className="w-10 h-10 ml-2 rounded-[14px] overflow-hidden border-2 border-zinc-200 hover:border-yellow-400 transition-colors shadow-sm">
+
               <img 
                 alt="User profile avatar" 
                 src={userProfile?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile?.name || 'User')}&background=FFD100&color=000000`} 

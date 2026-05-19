@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { db } from '../firebase';
-import { doc, onSnapshot, collection, addDoc, serverTimestamp, getDocs, query, where, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot, collection, addDoc, serverTimestamp, getDocs, query, where, updateDoc, getDoc, increment, arrayUnion, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { formatTime12h } from '../utils/formatters';
 
@@ -16,6 +16,7 @@ const RideDetails = () => {
   const [loading, setLoading] = useState(true);
   const [myRequest, setMyRequest] = useState(null);
   const [passengerDetails, setPassengerDetails] = useState({});
+  const [requests, setRequests] = useState([]);
 
   useEffect(() => {
     if (ride?.passengers?.length > 0) {
@@ -76,9 +77,21 @@ const RideDetails = () => {
       }
     });
 
+    // Fetch Pending Requests (for Host view)
+    const qRequests = query(
+      collection(db, 'requests'),
+      where('rideId', '==', id),
+      where('status', '==', 'pending')
+    );
+
+    const unsubscribeRequests = onSnapshot(qRequests, (snapshot) => {
+      setRequests(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
     return () => {
       unsubscribeRide();
       unsubscribeRequest();
+      unsubscribeRequests();
     };
   }, [id, currentUser]);
 
@@ -117,18 +130,59 @@ const RideDetails = () => {
         setProcessing(true);
         try {
           const rideRef = doc(db, 'rides', ride.id);
-          const updatedPassengers = ride.passengers.filter(id => id !== currentUser.uid);
+          const updatedPassengers = (ride.passengers || []).filter(id => id !== currentUser.uid);
+          const updatedPassengerDetails = (ride.passengerDetails || []).filter(p => p.uid !== currentUser.uid);
           await updateDoc(rideRef, { 
             passengers: updatedPassengers,
-            availableSeats: ride.seats - updatedPassengers.length
+            availableSeats: (ride.seats || 4) - updatedPassengers.length,
+            passengerDetails: updatedPassengerDetails
           });
           if (myRequest) {
-            await updateDoc(doc(db, 'requests', myRequest.id), { status: 'cancelled' });
+            await deleteDoc(doc(db, 'requests', myRequest.id));
           }
           showNotification("Success", "You have left the ride.");
         } catch (err) {
           console.error("Error leaving ride:", err);
           showNotification("Error", "Failed to leave ride.");
+        } finally {
+          setProcessing(false);
+        }
+      }
+    );
+  };
+
+  const handleRemovePassenger = async (passengerId) => {
+    showConfirm(
+      "Remove Passenger",
+      "Are you sure you want to remove this passenger from your ride?",
+      async () => {
+        setProcessing(true);
+        try {
+          const rideRef = doc(db, 'rides', id);
+          const updatedPassengers = (ride.passengers || []).filter(uid => uid !== passengerId);
+          const updatedPassengerDetails = (ride.passengerDetails || []).filter(p => p.uid !== passengerId);
+          
+          await updateDoc(rideRef, {
+            passengers: updatedPassengers,
+            availableSeats: (ride.seats || 4) - updatedPassengers.length,
+            passengerDetails: updatedPassengerDetails
+          });
+
+          const q = query(
+            collection(db, 'requests'),
+            where('rideId', '==', id),
+            where('passengerId', '==', passengerId)
+          );
+          const reqSnapshot = await getDocs(q);
+          const deletePromises = reqSnapshot.docs.map(reqDoc => 
+            deleteDoc(doc(db, 'requests', reqDoc.id))
+          );
+          await Promise.all(deletePromises);
+
+          showNotification("Success", "Passenger has been removed.");
+        } catch (err) {
+          console.error("Error removing passenger:", err);
+          showNotification("Error", "Failed to remove passenger.");
         } finally {
           setProcessing(false);
         }
@@ -157,6 +211,99 @@ const RideDetails = () => {
           showNotification("Error", "Failed to cancel ride.");
         } finally {
           setProcessing(false);
+        }
+      }
+    );
+  };
+
+  const handleAccept = async (request) => {
+    if (!ride || (ride.availableSeats !== undefined ? ride.availableSeats : (ride.seats || 4)) <= 0) return;
+
+    try {
+      // 1. Update Request Status
+      await updateDoc(doc(db, 'requests', request.id), {
+        status: 'approved'
+      });
+
+      // 2. Update Ride: Add passenger, decrement available seats, and sync passenger details
+      await updateDoc(doc(db, 'rides', ride.id), {
+        availableSeats: increment(-1),
+        passengers: arrayUnion(request.passengerId),
+        passengerDetails: arrayUnion({
+          uid: request.passengerId,
+          name: request.passengerName || 'Anonymous',
+          photoUrl: request.passengerPhoto || ''
+        })
+      });
+
+      showNotification('Success', 'Request accepted!');
+    } catch (err) {
+      console.error("Error accepting request:", err);
+      showNotification('Error', 'Failed to accept request.');
+    }
+  };
+
+  const handleReject = async (requestId) => {
+    try {
+      await updateDoc(doc(db, 'requests', requestId), {
+        status: 'rejected'
+      });
+      showNotification('Success', 'Request rejected.');
+    } catch (err) {
+      console.error("Error rejecting request:", err);
+      showNotification('Error', 'Failed to reject request.');
+    }
+  };
+
+  const handleCompleteRide = async () => {
+    showConfirm(
+      "Mark as Completed",
+      "Mark this ride as completed? This will move it to the history for all passengers.",
+      async () => {
+        try {
+          // 1. Update ride status
+          await updateDoc(doc(db, 'rides', id), { status: 'completed' });
+
+          // 2. Update all associated requests to 'completed'
+          const q = query(collection(db, 'requests'), where('rideId', '==', id));
+          const reqSnapshot = await getDocs(q);
+          const updatePromises = reqSnapshot.docs.map(reqDoc => 
+            updateDoc(doc(db, 'requests', reqDoc.id), { status: 'completed' })
+          );
+          await Promise.all(updatePromises);
+
+          showNotification("Success", `Ride from ${ride.pickup} to ${ride.destination} moved to history!`);
+          navigate('/history');
+        } catch (err) {
+          console.error("Error completing ride:", err);
+          showNotification("Error", "Failed to complete ride.");
+        }
+      }
+    );
+  };
+
+  const handleDeleteRide = async () => {
+    showConfirm(
+      "Delete Ride",
+      "Are you sure you want to delete this ride? This cannot be undone.",
+      async () => {
+        try {
+          // 1. Find and cancel all associated requests
+          const q = query(collection(db, 'requests'), where('rideId', '==', id));
+          const reqSnapshot = await getDocs(q);
+          const updatePromises = reqSnapshot.docs.map(reqDoc => 
+            updateDoc(doc(db, 'requests', reqDoc.id), { status: 'cancelled' })
+          );
+          await Promise.all(updatePromises);
+
+          // 2. Delete the ride document
+          await deleteDoc(doc(db, 'rides', id));
+          
+          showNotification("Deleted", "Ride and all associated requests removed.");
+          navigate('/dashboard');
+        } catch (err) {
+          console.error("Error deleting ride:", err);
+          showNotification("Error", "Failed to delete ride.");
         }
       }
     );
@@ -209,9 +356,9 @@ const RideDetails = () => {
               </div>
               <div className="flex items-center gap-3">
                 <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${
-                  (ride.status || 'open') === 'open' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'
+                  (ride.status || 'open').toLowerCase() === 'open' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'
                 }`}>
-                  {ride.status || 'open'}
+                  {ride.status ? ride.status.toLowerCase() : 'open'}
                 </span>
                 <button 
                   onClick={handleShare}
@@ -249,6 +396,52 @@ const RideDetails = () => {
             </div>
           </section>
 
+          {/* Pending Requests (Host only) */}
+          {isHost && (
+            <section className="bg-white rounded-[2.5rem] p-8 md:p-10 skeuo-card">
+              <h2 className="font-black text-xl text-zinc-900 mb-8 flex items-center gap-3">
+                <span className="material-symbols-outlined text-[#FFD100]">person_add</span>
+                Pending Requests ({requests.length})
+              </h2>
+              <div className="space-y-4">
+                {requests.length > 0 ? (
+                  requests.map(req => (
+                    <div key={req.id} className="flex flex-col sm:flex-row gap-4 items-start sm:items-center bg-zinc-50 p-4 rounded-2xl border border-zinc-100 hover:bg-zinc-100 transition-all group">
+                      <div className="relative shrink-0">
+                        <img className="w-16 h-16 rounded-xl object-cover skeuo-card border-none" src={req.passengerPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.passengerName)}&background=FFD100&color=000000`} alt={req.passengerName} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-black text-sm text-zinc-900 truncate">{req.passengerName}</h3>
+                        <p className="text-xs text-zinc-400">Interested in joining your ride</p>
+                      </div>
+                      <div className="flex gap-2 w-full sm:w-auto">
+                        <button 
+                          onClick={() => handleAccept(req)}
+                          disabled={(ride.availableSeats !== undefined ? ride.availableSeats : (ride.seats || 4)) <= 0}
+                          className="flex-1 sm:flex-none px-4 py-2 bg-[#FFD100] text-zinc-900 font-black rounded-xl transition-all active:scale-95 flex items-center justify-center gap-1 text-xs disabled:opacity-50"
+                        >
+                          <span className="material-symbols-outlined text-sm">check_circle</span>
+                          Accept
+                        </button>
+                        <button 
+                          onClick={() => handleReject(req.id)}
+                          className="flex-1 sm:flex-none px-4 py-2 bg-zinc-200 hover:bg-zinc-300 text-zinc-700 font-black rounded-xl transition-all active:scale-95 flex items-center justify-center gap-1 text-xs"
+                        >
+                          <span className="material-symbols-outlined text-sm">cancel</span>
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-8 text-center bg-zinc-50 rounded-[2rem] border-dashed border-2 border-zinc-100">
+                    <p className="text-zinc-400 font-black text-xs uppercase tracking-widest">No pending requests</p>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
           {/* Passenger List */}
           {(isHost || isApproved) && (
             <section className="bg-white rounded-[2.5rem] p-8 md:p-10 skeuo-card">
@@ -257,20 +450,48 @@ const RideDetails = () => {
                 Confirmed Passengers
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {ride.passengers?.length > 0 ? (
+                {/* Host Card (Always at the top) */}
+                <div className="flex items-center justify-between gap-4 bg-zinc-50 p-3 rounded-2xl border border-zinc-100 hover:bg-zinc-100 transition-all group">
+                  <Link to={`/profile/${ride.hostId}`} className="flex items-center gap-4 min-w-0 hover:opacity-85 transition-all group/p">
+                    <img 
+                      className="w-12 h-12 rounded-xl object-cover skeuo-card border-none" 
+                      src={ride.hostPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(ride.hostName)}&background=FFD100&color=000000`} 
+                      onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(ride.hostName)}&background=FFD100&color=000000` }}
+                      alt="Host" 
+                    />
+                    <div className="min-w-0">
+                      <p className="font-black text-sm text-zinc-900 truncate group-hover/p:text-[#FFD100] transition-colors">{ride.hostName} {isHost && '(You)'}</p>
+                      <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-1">
+                        Host
+                        <span className="material-symbols-outlined text-[10px] text-[#FFD100]" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
+                      </p>
+                    </div>
+                  </Link>
+                </div>
+
+                {/* Confirmed Passengers */}
+                {ride.passengers?.length > 0 && (
                   ride.passengers.map((pId, i) => (
-                    <div key={i} className="flex items-center gap-4 bg-zinc-50 p-3 rounded-2xl border border-zinc-100 hover:bg-zinc-100 transition-all group">
-                      <img className="w-12 h-12 rounded-xl object-cover skeuo-card border-none" src={passengerDetails[pId]?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(passengerDetails[pId]?.name || 'P')}&background=FFD100&color=000000`} alt="Passenger" />
-                      <div className="min-w-0">
-                        <p className="font-black text-sm text-zinc-900 truncate">{passengerDetails[pId]?.name || `User #${pId.slice(0, 4)}`}</p>
-                        <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Passenger</p>
-                      </div>
+                    <div key={i} className="flex items-center justify-between gap-4 bg-zinc-50 p-3 rounded-2xl border border-zinc-100 hover:bg-zinc-100 transition-all group">
+                      <Link to={`/profile/${pId}`} className="flex items-center gap-4 min-w-0 hover:opacity-85 transition-all group/p">
+                        <img className="w-12 h-12 rounded-xl object-cover skeuo-card border-none" src={passengerDetails[pId]?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(passengerDetails[pId]?.name || 'P')}&background=FFD100&color=000000`} alt="Passenger" />
+                        <div className="min-w-0">
+                          <p className="font-black text-sm text-zinc-900 truncate group-hover/p:text-[#FFD100] transition-colors">{passengerDetails[pId]?.name || `User #${pId.slice(0, 4)}`}</p>
+                          <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Passenger • Profile</p>
+                        </div>
+                      </Link>
+                      {isHost && (
+                        <button
+                          onClick={() => handleRemovePassenger(pId)}
+                          disabled={processing}
+                          className="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-all active:scale-95 disabled:opacity-50 shrink-0"
+                          title="Remove Passenger"
+                        >
+                          <span className="material-symbols-outlined text-sm">person_remove</span>
+                        </button>
+                      )}
                     </div>
                   ))
-                ) : (
-                  <div className="col-span-full py-8 text-center bg-zinc-50 rounded-[2rem] border-dashed border-2 border-zinc-100">
-                    <p className="text-zinc-400 font-black text-xs uppercase tracking-widest">No passengers yet</p>
-                  </div>
                 )}
               </div>
             </section>
@@ -302,7 +523,7 @@ const RideDetails = () => {
               </div>
               <div className="text-center border-l border-white/10">
                 <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Available Seats</p>
-                <p className="text-xl font-black text-[#FFD100]">{ride.availableSeats} of {ride.seats}</p>
+                <p className="text-xl font-black text-[#FFD100]">{(ride.availableSeats !== undefined ? ride.availableSeats : (ride.seats || 4))} of {ride.seats || 4}</p>
               </div>
             </div>
           </div>
@@ -311,14 +532,27 @@ const RideDetails = () => {
           <div className="space-y-4">
             {isHost ? (
               <div className="flex flex-col gap-4">
-                <Link to={`/manage-requests/${ride.id}`} className="w-full bg-[#FFD100] text-zinc-900 py-5 rounded-2xl font-black text-center shadow-xl hover:bg-yellow-400 transition-all active:scale-[0.98]">
-                  Manage Requests
-                </Link>
-                <Link to={`/chat/${ride.id}`} className="w-full bg-white border border-zinc-100 text-zinc-900 py-5 rounded-2xl font-black text-center skeuo-card border-none hover:bg-zinc-50 transition-all active:scale-[0.98]">
+                {(ride.status || 'open').toLowerCase() === 'open' && (
+                  <button 
+                    onClick={handleCompleteRide}
+                    className="w-full bg-[#FFD100] text-zinc-900 py-5 rounded-2xl font-black text-center shadow-xl hover:bg-yellow-400 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-lg">check_circle</span>
+                    Mark as Completed
+                  </button>
+                )}
+
+                <Link to={`/chat/${ride.id}`} className="w-full bg-white border border-zinc-100 text-zinc-900 py-5 rounded-2xl font-black text-center skeuo-card border-none hover:bg-zinc-50 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                  <span className="material-symbols-outlined text-lg">chat</span>
                   Open Group Chat
                 </Link>
-                <button onClick={handleCancelRide} className="text-red-500 font-black text-xs uppercase tracking-widest hover:text-red-600 transition-colors py-2 mx-auto w-max">
-                  Cancel Entire Ride
+
+                <button 
+                  onClick={handleDeleteRide}
+                  className="w-full bg-red-600 text-white py-4 rounded-2xl font-black text-center hover:bg-red-700 transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-red-600/10"
+                >
+                  <span className="material-symbols-outlined text-lg">delete</span>
+                  Delete Ride
                 </button>
               </div>
             ) : (
@@ -334,10 +568,15 @@ const RideDetails = () => {
                         <p className="text-xs font-medium opacity-80">You are ready to go!</p>
                       </div>
                     </div>
-                    <Link to={`/chat/${ride.id}`} className="w-full bg-zinc-900 text-[#FFD100] py-5 rounded-2xl font-black text-center shadow-xl hover:bg-zinc-800 transition-all active:scale-[0.98]">
-                      Start Chatting
+                    <Link to={`/chat/${ride.id}`} className="w-full bg-white border border-zinc-100 text-zinc-900 py-5 rounded-2xl font-black text-center skeuo-card border-none hover:bg-zinc-50 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                      <span className="material-symbols-outlined text-lg">chat</span>
+                      Open Group Chat
                     </Link>
-                    <button onClick={handleLeaveRide} className="text-red-500 font-black text-[10px] uppercase tracking-widest hover:text-red-600 transition-colors pt-2">
+                    <button 
+                      onClick={handleLeaveRide} 
+                      className="w-full bg-red-600 text-white py-4 rounded-2xl font-black text-center hover:bg-red-700 transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-red-600/10"
+                    >
+                      <span className="material-symbols-outlined text-lg">logout</span>
                       Leave Ride
                     </button>
                   </>
@@ -355,46 +594,17 @@ const RideDetails = () => {
                 ) : (
                   <button 
                     onClick={handleJoinRequest}
-                    disabled={processing || ride.availableSeats === 0 || ride.status !== 'open'}
+                    disabled={processing || ride.availableSeats === 0 || (ride.status || 'open').toLowerCase() !== 'open'}
                     className="w-full bg-[#FFD100] text-zinc-900 py-6 rounded-2xl font-black text-lg shadow-2xl hover:bg-yellow-400 transition-all active:scale-[0.98] disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
                   >
-                    {ride.status !== 'open' ? 'Ride Closed' : (ride.availableSeats === 0 ? 'Ride Full' : (processing ? 'Processing...' : 'Request to Join'))}
+                    {(ride.status || 'open').toLowerCase() !== 'open' ? 'Ride Closed' : (ride.availableSeats === 0 ? 'Ride Full' : (processing ? 'Processing...' : 'Request to Join'))}
                   </button>
                 )}
               </div>
             )}
           </div>
 
-          {/* Host Info */}
-          <section className="bg-white rounded-[2.5rem] p-8 skeuo-card">
-            <h4 className="text-[10px] font-black text-zinc-300 uppercase tracking-widest mb-6">Ride Organizer</h4>
-            <div className="flex items-center gap-5">
-              <div className="relative">
-                <img 
-                  className="w-16 h-16 md:w-20 md:h-20 rounded-2xl object-cover skeuo-card border-none" 
-                  src={ride.hostPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(ride.hostName)}&background=FFD100&color=000000`} 
-                  onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(ride.hostName)}&background=FFD100&color=000000` }}
-                  alt="Host" 
-                />
-                <div className="absolute -bottom-1 -right-1 bg-[#FFD100] text-zinc-900 p-1 rounded-full shadow-md border-2 border-white">
-                  <span className="material-symbols-outlined text-[12px] font-black" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
-                </div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-black text-lg text-zinc-900 truncate leading-tight mb-1">{isHost ? 'You (Host)' : ride.hostName}</p>
-                <div className="flex items-center gap-2">
-                  <div className="flex text-[#FFD100]">
-                    <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                  </div>
-                  <span className="font-black text-xs text-zinc-700">{isHost ? (userProfile?.rating || '5.0') : '4.9'}</span>
-                  <span className="text-[10px] font-black text-zinc-300 uppercase tracking-widest">• Trusted Host</span>
-                </div>
-              </div>
-              {!isHost && (
-                <Link to={`/profile/${ride.hostId}`} className="text-[#FFD100] font-black text-[10px] uppercase tracking-widest hover:text-yellow-600 transition-all">Profile</Link>
-              )}
-            </div>
-          </section>
+
         </div>
       </div>
     </main>

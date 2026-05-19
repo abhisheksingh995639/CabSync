@@ -26,9 +26,26 @@ const Chat = () => {
       textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px';
     }
   }, [newMessage]);
-
   useEffect(() => {
     if (!rideId) return;
+
+    const getTimestampMs = (timestamp) => {
+      if (!timestamp) return 0;
+      if (typeof timestamp.toDate === 'function') {
+        return timestamp.toDate().getTime();
+      }
+      if (typeof timestamp.seconds === 'number') {
+        return timestamp.seconds * 1000 + Math.floor((timestamp.nanoseconds || 0) / 1000000);
+      }
+      if (typeof timestamp === 'number') {
+        return timestamp < 10000000000 ? timestamp * 1000 : timestamp;
+      }
+      if (typeof timestamp === 'string') {
+        const parsed = Date.parse(timestamp);
+        return isNaN(parsed) ? 0 : parsed;
+      }
+      return 0;
+    };
 
     const unsubscribeRide = onSnapshot(doc(db, 'rides', rideId), (docSnap) => {
       if (docSnap.exists()) {
@@ -46,9 +63,7 @@ const Chat = () => {
     const unsubscribeMessages = onSnapshot(q, (snapshot) => {
       const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       msgs.sort((a, b) => {
-        const timeA = a.timestamp?.seconds || 0;
-        const timeB = b.timestamp?.seconds || 0;
-        return timeA - timeB;
+        return getTimestampMs(a.timestamp) - getTimestampMs(b.timestamp);
       });
       setMessages(msgs);
       setTimeout(scrollToBottom, 100);
@@ -221,7 +236,10 @@ const Chat = () => {
                   {msg.text}
                 </div>
                 <span className={`text-[9px] font-bold text-zinc-300 uppercase tracking-widest ${isMe ? 'mr-1' : 'ml-1'}`}>
-                  {msg.timestamp ? msg.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Sending...'}
+                  {msg.timestamp ? new Date(
+                    msg.timestamp.toDate ? msg.timestamp.toDate().getTime() : 
+                    (typeof msg.timestamp === 'number' ? (msg.timestamp < 10000000000 ? msg.timestamp * 1000 : msg.timestamp) : Date.parse(msg.timestamp))
+                  ).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Sending...'}
                 </span>
               </div>
             </div>

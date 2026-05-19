@@ -16,7 +16,8 @@ const PostRide = () => {
     time: '',
     seats: '2',
     fare: '',
-    rideType: 'AC'
+    rideType: 'AC',
+    carModel: 'Sedan'
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -38,16 +39,18 @@ const PostRide = () => {
         destination: formData.destination,
         date: formData.date,
         time: formData.time,
-        seats: parseInt(formData.seats),
-        fare: parseFloat(formData.fare),
+        seats: parseInt(formData.seats, 10),
+        fare: parseInt(formData.fare, 10),
         hostId: currentUser.uid,
         hostName: userProfile?.name || currentUser.displayName || 'Anonymous',
         hostPhoto: userProfile?.photoUrl || currentUser.photoURL || '',
         createdAt: serverTimestamp(),
         status: 'open',
         passengers: [],
-        availableSeats: parseInt(formData.seats),
-        rideType: formData.rideType
+        availableSeats: parseInt(formData.seats, 10),
+        rideType: formData.rideType,
+        carModel: formData.carModel,
+        tags: formData.rideType === 'AC' ? ['AC'] : []
       };
 
       console.log("Attempting to post ride:", rideData);
@@ -243,6 +246,31 @@ const PostRide = () => {
                       ))}
                     </div>
                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+                  {/* Vehicle Type Selector */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest block ml-2">Vehicle Type</label>
+                    <div className="relative group">
+                      <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-[#FFD100] transition-colors">directions_car</span>
+                      <select 
+                        name="carModel"
+                        value={formData.carModel}
+                        onChange={handleChange}
+                        className="w-full pl-12 pr-10 py-3.5 md:py-4 bg-zinc-50 border-none rounded-2xl skeuo-input-tactile focus:ring-2 focus:ring-[#FFD100]/20 outline-none transition-all font-medium text-sm md:text-base appearance-none cursor-pointer text-zinc-900" 
+                        required
+                      >
+                        <option value="Sedan">Sedan</option>
+                        <option value="SUV">SUV</option>
+                        <option value="Hatchback">Hatchback</option>
+                        <option value="MPV">MPV</option>
+                        <option value="Not Confirmed">Not Confirmed</option>
+                      </select>
+                      <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">expand_more</span>
+                    </div>
+                  </div>
+                  <div className="hidden md:block"></div>
                 </div>
                 {error && <div className="p-4 bg-red-50 text-red-700 rounded-2xl text-sm font-bold border border-red-100">{error}</div>}
                 {/* Submit Button */}

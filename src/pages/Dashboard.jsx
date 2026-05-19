@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase';
-import { collection, query, where, onSnapshot, orderBy, limit, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, limit, deleteDoc, doc, getDoc } from 'firebase/firestore';
 import { useNotification } from '../context/NotificationContext';
 import { formatTime12h } from '../utils/formatters';
 
@@ -62,7 +62,7 @@ const Dashboard = () => {
     const myRidesQuery = query(
       collection(db, 'rides'),
       where('hostId', '==', currentUser.uid),
-      where('status', '==', 'open')
+      where('status', 'in', ['open', 'OPEN'])
     );
 
     const unsubscribeMyRides = onSnapshot(myRidesQuery, (snapshot) => {
@@ -73,12 +73,41 @@ const Dashboard = () => {
 
     const myRequestsQuery = query(
       collection(db, 'requests'),
-      where('passengerId', '==', currentUser.uid),
-      orderBy('timestamp', 'desc')
+      where('passengerId', '==', currentUser.uid)
     );
 
-    const unsubscribeMyRequests = onSnapshot(myRequestsQuery, (snapshot) => {
-      setMyRequests(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    const unsubscribeMyRequests = onSnapshot(myRequestsQuery, async (snapshot) => {
+      const requestsData = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(req => req.status !== 'cancelled');
+      
+      const resolvedRequests = await Promise.all(
+        requestsData.map(async (req) => {
+          try {
+            const rideSnap = await getDoc(doc(db, 'rides', req.rideId));
+            if (rideSnap.exists()) {
+              const rData = rideSnap.data();
+              return {
+                ...req,
+                rideDate: rData.date,
+                rideTime: rData.time,
+                rideFare: rData.fare
+              };
+            }
+          } catch (e) {
+            console.error("Error fetching ride for request:", e);
+          }
+          return req;
+        })
+      );
+
+      resolvedRequests.sort((a, b) => {
+        const tA = a.timestamp?.seconds || a.timestamp || 0;
+        const tB = b.timestamp?.seconds || b.timestamp || 0;
+        return tB - tA;
+      });
+
+      setMyRequests(resolvedRequests);
       setLoading(false);
     }, (err) => {
       console.error("Dashboard MyRequests Error:", err);
@@ -248,37 +277,49 @@ const Dashboard = () => {
         {myRides.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
             {myRides.map(ride => (
-              <div key={ride.id} className="bg-white rounded-2xl md:rounded-[2rem] skeuo-card relative overflow-hidden group">
+              <div key={ride.id} className="bg-white rounded-2xl md:rounded-[2rem] skeuo-card relative overflow-hidden group hover:scale-[1.01] transition-all duration-300">
                 {/* Yellow top accent */}
                 <div className="h-1 w-full bg-[#FFD100]" />
                 <div className="p-4 md:p-6">
-                  {/* Top row: status badge + time */}
-                  <div className="flex justify-between items-center mb-3 md:mb-4">
-                    <span className="bg-zinc-50 text-zinc-400 border border-zinc-100 px-2 py-0.5 rounded-md text-[9px] md:text-[10px] font-black uppercase tracking-widest">
-                      {ride.status}
+                  {/* Header status and fare */}
+                  <div className="flex justify-between items-center mb-4 border-b border-zinc-50 pb-3">
+                    <span className="bg-[#FFD100]/10 text-zinc-800 border border-[#FFD100]/20 px-2 py-0.5 rounded-md text-[9px] md:text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[12px]">airline_seat_recline_normal</span>
+                      {(ride.availableSeats !== undefined ? ride.availableSeats : (ride.seats || 4))} / {ride.seats || 4} seats
                     </span>
-                    <span className="bg-zinc-50 border border-zinc-100 px-2 py-0.5 rounded-md text-zinc-700 font-black text-[10px] md:text-xs">
-                      {formatTime12h(ride.time)}
-                    </span>
+                    <div className="text-right">
+                      <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest block mb-0.5">Total Fare</span>
+                      <span className="text-sm md:text-base font-black text-zinc-900">₹{ride.fare}</span>
+                    </div>
                   </div>
 
-                  {/* Destination */}
-                  <h3 className="font-black text-base md:text-xl text-zinc-900 truncate mb-2 md:mb-3">{ride.destination}</h3>
-
-                  {/* Meta row */}
-                  <div className="flex items-center gap-3 mb-3 md:mb-5">
-                    <div className="flex items-center gap-1 text-zinc-400 font-bold text-[10px] md:text-xs uppercase tracking-tight">
-                      <span className="material-symbols-outlined text-sm md:text-base">calendar_today</span>
-                      {ride.date}
+                  {/* Path Map (Single Line) */}
+                  <div className="flex items-center justify-between gap-4 mb-4 pt-1">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-1">From</p>
+                      <p className="text-zinc-700 font-bold text-xs md:text-sm truncate">{ride.pickup}</p>
                     </div>
-                    <div className="flex items-center gap-1 text-zinc-400 font-bold text-[10px] md:text-xs uppercase tracking-tight">
-                      <span className="material-symbols-outlined text-sm md:text-base">group</span>
-                      {ride.seats - ride.availableSeats}/{ride.seats}
+                    <span className="material-symbols-outlined text-zinc-300 text-base flex-shrink-0 self-end mb-1">arrow_forward</span>
+                    <div className="min-w-0 flex-1 text-right">
+                      <p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-1">To</p>
+                      <p className="text-zinc-900 font-black text-xs md:text-sm truncate">{ride.destination}</p>
+                    </div>
+                  </div>
+
+                  {/* Departure Info Grid */}
+                  <div className="grid grid-cols-2 gap-2 mb-4 pt-3 border-t border-zinc-50">
+                    <div className="min-w-0">
+                      <p className="text-[7px] md:text-[8px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-1">Departure Date</p>
+                      <p className="text-zinc-700 font-bold text-[10px] md:text-xs truncate">{ride.date}</p>
+                    </div>
+                    <div className="min-w-0 text-right">
+                      <p className="text-[7px] md:text-[8px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-1">Departure Time</p>
+                      <p className="text-zinc-900 font-black text-[10px] md:text-xs truncate">{formatTime12h(ride.time)}</p>
                     </div>
                   </div>
 
                   <Link
-                    to={`/manage-requests/${ride.id}`}
+                    to={`/ride/${ride.id}`}
                     className="block w-full bg-zinc-900 text-white text-center font-black py-2.5 md:py-3.5 rounded-lg md:rounded-xl hover:bg-zinc-800 transition-all text-xs md:text-sm active:scale-95"
                   >
                     Manage Ride
@@ -319,44 +360,58 @@ const Dashboard = () => {
             {myRequests.map(req => {
               const cfg = statusConfig[req.status] || statusConfig.rejected;
               return (
-                <div key={req.id} className="bg-white rounded-2xl md:rounded-[2rem] p-4 md:p-6 skeuo-card">
-                  {/* Top row: status badge + actions */}
-                  <div className="flex justify-between items-center mb-3 md:mb-4">
-                    <div className={`px-2 py-0.5 md:px-3 md:py-1 rounded-md border flex items-center gap-1 ${cfg.bg}`}>
-                      <span className="material-symbols-outlined text-[11px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                        {cfg.icon}
-                      </span>
-                      <span className="font-black text-[9px] md:text-[10px] uppercase tracking-widest">{req.status}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-zinc-50 flex items-center justify-center text-zinc-300 shadow-inner">
-                        <span className="material-symbols-outlined text-xs md:text-sm">route</span>
+                <div key={req.id} className="bg-white rounded-2xl md:rounded-[2rem] skeuo-card relative overflow-hidden group hover:scale-[1.01] transition-all duration-300">
+                  {/* Yellow top accent */}
+                  <div className="h-1 w-full bg-[#FFD100]" />
+                  <div className="p-4 md:p-6">
+                    {/* Header status and fare */}
+                    <div className="flex justify-between items-center mb-4 border-b border-zinc-50 pb-3">
+                      <div className={`px-2 py-0.5 md:px-3 md:py-1 rounded-md border flex items-center gap-1 ${cfg.bg}`}>
+                        <span className="material-symbols-outlined text-[11px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                          {cfg.icon}
+                        </span>
+                        <span className="font-black text-[9px] md:text-[10px] uppercase tracking-widest">{req.status}</span>
                       </div>
-                      <button
-                        onClick={() => handleDeleteRequest(req.id)}
-                        className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-red-50 text-red-400 flex items-center justify-center hover:bg-red-100 transition-all"
-                      >
-                        <span className="material-symbols-outlined text-xs md:text-sm">delete</span>
-                      </button>
+                      <div className="text-right">
+                        <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest block mb-0.5">Total Fare</span>
+                        <span className="text-sm md:text-base font-black text-zinc-900">₹{req.rideFare || '—'}</span>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Destination + Pickup */}
-                  <div className="mb-3 md:mb-5">
-                    <p className="text-[9px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">To</p>
-                    <h4 className="font-black text-sm md:text-xl text-zinc-900 truncate">{req.rideDestination}</h4>
-                    <div className="flex items-center gap-1.5 mt-1.5 text-zinc-400">
-                      <span className="material-symbols-outlined text-sm">location_on</span>
-                      <span className="truncate font-medium text-xs md:text-sm">From {req.ridePickup}</span>
+                    {/* Path Map (Single Line) */}
+                    <div className="flex items-center justify-between gap-4 mb-4 pt-1">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-1">From</p>
+                        <p className="text-zinc-700 font-bold text-xs md:text-sm truncate">{req.ridePickup}</p>
+                      </div>
+                      <span className="material-symbols-outlined text-zinc-300 text-base flex-shrink-0 self-end mb-1">arrow_forward</span>
+                      <div className="min-w-0 flex-1 text-right">
+                        <p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-1">To</p>
+                        <p className="text-zinc-900 font-black text-xs md:text-sm truncate">{req.rideDestination}</p>
+                      </div>
                     </div>
-                  </div>
 
-                  <Link
-                    to={`/ride/${req.rideId}`}
-                    className="block w-full bg-zinc-50 text-zinc-900 text-center font-black py-2.5 md:py-3.5 rounded-lg md:rounded-xl hover:bg-zinc-100 transition-all text-xs md:text-sm border border-zinc-100 active:scale-95"
-                  >
-                    View Ride Details
-                  </Link>
+                    {/* Departure Info Grid */}
+                    <div className="grid grid-cols-2 gap-2 mb-4 pt-3 border-t border-zinc-50">
+                      <div className="min-w-0">
+                        <p className="text-[7px] md:text-[8px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-1">Departure Date</p>
+                        <p className="text-zinc-700 font-bold text-[10px] md:text-xs truncate">{req.rideDate || '—'}</p>
+                      </div>
+                      <div className="min-w-0 text-right">
+                        <p className="text-[7px] md:text-[8px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-1">Departure Time</p>
+                        <p className="text-zinc-900 font-black text-[10px] md:text-xs truncate">
+                          {req.rideTime ? formatTime12h(req.rideTime) : '—'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <Link
+                      to={`/ride/${req.rideId}`}
+                      className="block w-full bg-zinc-900 text-white text-center font-black py-2.5 md:py-3.5 rounded-lg md:rounded-xl hover:bg-zinc-800 transition-all text-xs md:text-sm active:scale-95"
+                    >
+                      View Ride
+                    </Link>
+                  </div>
                 </div>
               );
             })}

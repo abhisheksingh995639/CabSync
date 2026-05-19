@@ -14,6 +14,8 @@ const BrowseRides = () => {
   const [selectedType, setSelectedType] = useState(() => localStorage.getItem('cabsync_filter_type') || 'Any');
   const [startTime, setStartTime] = useState(() => Number(localStorage.getItem('cabsync_filter_starttime')) || 0);
   const [endTime, setEndTime] = useState(() => Number(localStorage.getItem('cabsync_filter_endtime')) || 1439);
+  const [selectedVehicleType, setSelectedVehicleType] = useState(() => localStorage.getItem('cabsync_filter_vehicletype') || 'Any');
+  const [minSeats, setMinSeats] = useState(() => Number(localStorage.getItem('cabsync_filter_minseats')) || 1);
 
   // Persistence Effect
   useEffect(() => {
@@ -22,7 +24,9 @@ const BrowseRides = () => {
     localStorage.setItem('cabsync_filter_type', selectedType);
     localStorage.setItem('cabsync_filter_starttime', startTime.toString());
     localStorage.setItem('cabsync_filter_endtime', endTime.toString());
-  }, [searchTerm, maxPrice, selectedType, startTime, endTime]);
+    localStorage.setItem('cabsync_filter_vehicletype', selectedVehicleType);
+    localStorage.setItem('cabsync_filter_minseats', minSeats.toString());
+  }, [searchTerm, maxPrice, selectedType, startTime, endTime, selectedVehicleType, minSeats]);
 
   const timeToMinutes = (timeStr) => {
     if (!timeStr) return 0;
@@ -43,7 +47,7 @@ const BrowseRides = () => {
     window.scrollTo(0, 0);
     const q = query(
       collection(db, 'rides'),
-      where('status', '==', 'open')
+      where('status', 'in', ['open', 'OPEN'])
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -74,12 +78,22 @@ const BrowseRides = () => {
     const matchesSearch = (ride.destination || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (ride.pickup || "").toLowerCase().includes(searchTerm.toLowerCase());
     const matchesPrice = (ride.fare || 0) <= maxPrice;
-    const matchesType = selectedType === 'Any' || ride.rideType === selectedType;
+    const matchesType = selectedType === 'Any' || (
+      selectedType === 'AC' 
+        ? (ride.tags && ride.tags.includes('AC'))
+        : !(ride.tags && ride.tags.includes('AC'))
+    );
     
     const rideTimeMins = timeToMinutes(ride.time);
     const matchesTime = rideTimeMins >= startTime && rideTimeMins <= endTime;
 
-    return matchesSearch && matchesPrice && matchesType && matchesTime;
+    const matchesVehicleType = selectedVehicleType === 'Any' || 
+      (ride.carModel || 'Sedan').toLowerCase() === selectedVehicleType.toLowerCase();
+
+    const rideSeats = ride.availableSeats !== undefined ? ride.availableSeats : (ride.seats || 4);
+    const matchesMinSeats = rideSeats >= minSeats;
+
+    return matchesSearch && matchesPrice && matchesType && matchesTime && matchesVehicleType && matchesMinSeats;
   });
 
   return (
@@ -153,6 +167,52 @@ const BrowseRides = () => {
                       }`}>{type}</span>
                     </label>
                   ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest block mb-4">Vehicle Type</label>
+                <div className="flex flex-wrap gap-2">
+                  {['Any', 'Sedan', 'SUV', 'Hatchback', 'MPV', 'Not Confirmed'].map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setSelectedVehicleType(type)}
+                      className={`px-3 py-2 rounded-xl text-xs font-black transition-all ${
+                        selectedVehicleType === type 
+                          ? 'bg-zinc-900 text-[#FFD100] shadow-md' 
+                          : 'bg-zinc-50 text-zinc-500 hover:bg-zinc-100'
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest block">Min Seats Available</label>
+                  <span className="text-zinc-900 font-black text-sm">{minSeats} {minSeats === 1 ? 'Seat' : 'Seats'}</span>
+                </div>
+                <div className="relative h-10 flex items-center">
+                  <input 
+                    type="range" 
+                    min="1" 
+                    max="10" 
+                    step="1"
+                    value={minSeats}
+                    onChange={(e) => setMinSeats(parseInt(e.target.value))}
+                    className="w-full h-1.5 bg-zinc-100 rounded-full appearance-none cursor-pointer accent-[#FFD100] skeuo-input-tactile border-none"
+                  />
+                  <div 
+                    className="absolute h-1.5 bg-[#FFD100] rounded-full pointer-events-none" 
+                    style={{ width: `${((minSeats - 1) / 9) * 100}%` }}
+                  ></div>
+                </div>
+                <div className="flex justify-between mt-2">
+                  <span className="text-[10px] font-bold text-zinc-300">1</span>
+                  <span className="text-[10px] font-bold text-zinc-300">10</span>
                 </div>
               </div>
 
@@ -308,7 +368,19 @@ const BrowseRides = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 md:gap-4 mb-4 md:mb-8 pt-4 md:pt-6 border-t border-zinc-50">
+                    <div className="grid grid-cols-2 gap-y-4 gap-x-3 md:gap-y-6 md:gap-x-4 mb-4 md:mb-8 pt-4 md:pt-6 border-t border-zinc-50">
+                      {/* Date */}
+                      <div className="flex items-center gap-2 md:gap-3">
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-400">
+                          <span className="material-symbols-outlined text-lg md:text-xl">calendar_today</span>
+                        </div>
+                        <div>
+                          <p className="text-[8px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-0.5 md:mb-1">Date</p>
+                          <p className="text-xs md:text-sm font-black text-zinc-900">{ride.date}</p>
+                        </div>
+                      </div>
+                      
+                      {/* Time */}
                       <div className="flex items-center gap-2 md:gap-3">
                         <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-400">
                           <span className="material-symbols-outlined text-lg md:text-xl">schedule</span>
@@ -318,13 +390,26 @@ const BrowseRides = () => {
                           <p className="text-xs md:text-sm font-black text-zinc-900">{formatTime12h(ride.time)}</p>
                         </div>
                       </div>
+
+                      {/* Vehicle */}
+                      <div className="flex items-center gap-2 md:gap-3">
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-400">
+                          <span className="material-symbols-outlined text-lg md:text-xl">directions_car</span>
+                        </div>
+                        <div>
+                          <p className="text-[8px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-0.5 md:mb-1">Vehicle</p>
+                          <p className="text-xs md:text-sm font-black text-zinc-900 truncate max-w-[100px]">{ride.carModel || 'Sedan'}</p>
+                        </div>
+                      </div>
+
+                      {/* Seats */}
                       <div className="flex items-center gap-2 md:gap-3">
                         <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-400">
                           <span className="material-symbols-outlined text-lg md:text-xl">group</span>
                         </div>
                         <div>
                           <p className="text-[8px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-0.5 md:mb-1">Seats</p>
-                          <p className="text-xs md:text-sm font-black text-zinc-900">{ride.availableSeats} left</p>
+                          <p className="text-xs md:text-sm font-black text-zinc-900">{(ride.availableSeats !== undefined ? ride.availableSeats : (ride.seats || 4))} left</p>
                         </div>
                       </div>
                     </div>

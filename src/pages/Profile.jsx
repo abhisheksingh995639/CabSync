@@ -31,6 +31,61 @@ const Profile = () => {
   const [reportReason, setReportReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const [hasMutualRide, setHasMutualRide] = useState(false);
+
+  useEffect(() => {
+    if (!currentUser || !targetUserId || isOwnProfile) return;
+
+    const checkMutualRide = async () => {
+      try {
+        const q1 = query(
+          collection(db, 'rides'),
+          where('hostId', '==', targetUserId),
+          where('passengers', 'array-contains', currentUser.uid)
+        );
+        const q2 = query(
+          collection(db, 'rides'),
+          where('hostId', '==', currentUser.uid),
+          where('passengers', 'array-contains', targetUserId)
+        );
+
+        const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+        if (!snap1.empty || !snap2.empty) {
+          setHasMutualRide(true);
+        } else {
+          setHasMutualRide(false);
+        }
+      } catch (err) {
+        console.error("Error checking mutual ride:", err);
+      }
+    };
+
+    checkMutualRide();
+  }, [currentUser, targetUserId, isOwnProfile]);
+
+  const canViewPhone = () => {
+    if (isOwnProfile) return true;
+    const preference = viewedProfile?.privacySettings?.showPhone || 'public';
+    if (preference === 'public') return true;
+    if (preference === 'confirmed') return hasMutualRide;
+    return false;
+  };
+
+  const canViewHistory = () => {
+    if (isOwnProfile) return true;
+    const preference = viewedProfile?.privacySettings?.showHistory || 'public';
+    if (preference === 'public') return true;
+    if (preference === 'confirmed') return hasMutualRide;
+    return false;
+  };
+
+  const canViewBio = () => {
+    if (isOwnProfile) return true;
+    const preference = viewedProfile?.privacySettings?.showBio || 'public';
+    if (preference === 'public') return true;
+    return false;
+  };
+
   // Fetch target user's profile if not our own
   useEffect(() => {
     if (!targetUserId) return;
@@ -329,7 +384,7 @@ const Profile = () => {
                       <span className="material-symbols-outlined text-sm">mail</span>
                       {displayEmail}
                     </p>
-                    {(!id || viewedProfile?.privacySettings?.showPhone !== 'private') && viewedProfile?.phone && (
+                    {canViewPhone() && viewedProfile?.phone && (
                       <p className="text-zinc-400 font-medium text-xs md:text-sm truncate flex items-center gap-1.5">
                         <span className="material-symbols-outlined text-sm">call</span>
                         {viewedProfile.phone}
@@ -400,8 +455,7 @@ const Profile = () => {
                 )}
               </div>
 
-              {/* Bio */}
-              {(isOwnProfile || viewedProfile?.privacySettings?.showBio !== 'private') && (
+              {canViewBio() && (
                 <p className="text-zinc-500 font-medium text-xs md:text-sm mt-3 leading-relaxed line-clamp-2">
                   {viewedProfile?.bio || (isOwnProfile ? "No bio added yet. Edit your profile to tell the community about yourself." : "No bio added yet.")}
                 </p>
@@ -492,7 +546,7 @@ const Profile = () => {
           </div>
 
           {/* History Card - Private */}
-          {(isOwnProfile || viewedProfile?.privacySettings?.showHistory !== 'private') && (
+          {canViewHistory() && (
             <div className="bg-white rounded-2xl skeuo-card p-5 md:p-6 h-full">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-black text-base md:text-lg text-zinc-900 flex items-center gap-2">
@@ -591,31 +645,36 @@ const Profile = () => {
                    </div>
 
                    {/* History Privacy */}
-                   <div className="p-5 bg-zinc-50 rounded-3xl border border-zinc-100 flex items-center justify-between gap-4">
+                   <div className="p-5 bg-zinc-50 rounded-3xl border border-zinc-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div>
-                         <p className="font-black text-zinc-900">Ride History</p>
-                         <p className="text-xs text-zinc-500 font-medium">Make your past rides visible to others.</p>
+                         <p className="font-black text-zinc-900">Ride History Visibility</p>
+                         <p className="text-xs text-zinc-500 font-medium">Choose who can view your completed ride history.</p>
                       </div>
-                      <button 
-                        onClick={() => updateSetting('showHistory', viewedProfile?.privacySettings?.showHistory === 'private' ? 'public' : 'private')}
-                        className={`w-12 h-6 rounded-full transition-all relative ${viewedProfile?.privacySettings?.showHistory !== 'private' ? 'bg-[#FFD100]' : 'bg-zinc-300'}`}
+                      <select 
+                        value={viewedProfile?.privacySettings?.showHistory || 'public'}
+                        onChange={(e) => updateSetting('showHistory', e.target.value)}
+                        className="bg-white border border-zinc-200 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-[#FFD100]/20"
                       >
-                         <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${viewedProfile?.privacySettings?.showHistory !== 'private' ? 'left-7' : 'left-1'}`} />
-                      </button>
+                         <option value="public">Everyone</option>
+                         <option value="confirmed">Confirmed Passengers</option>
+                         <option value="private">Only Me</option>
+                      </select>
                    </div>
 
                    {/* Bio Visibility */}
-                   <div className="p-5 bg-zinc-50 rounded-3xl border border-zinc-100 flex items-center justify-between gap-4">
+                   <div className="p-5 bg-zinc-50 rounded-3xl border border-zinc-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div>
-                         <p className="font-black text-zinc-900">Public Profile Bio</p>
-                         <p className="text-xs text-zinc-500 font-medium">Show your bio to other users.</p>
+                         <p className="font-black text-zinc-900">Profile Bio Visibility</p>
+                         <p className="text-xs text-zinc-500 font-medium">Choose who can read your bio.</p>
                       </div>
-                      <button 
-                        onClick={() => updateSetting('showBio', viewedProfile?.privacySettings?.showBio === 'private' ? 'public' : 'private')}
-                        className={`w-12 h-6 rounded-full transition-all relative ${viewedProfile?.privacySettings?.showBio !== 'private' ? 'bg-[#FFD100]' : 'bg-zinc-300'}`}
+                      <select 
+                        value={viewedProfile?.privacySettings?.showBio || 'public'}
+                        onChange={(e) => updateSetting('showBio', e.target.value)}
+                        className="bg-white border border-zinc-200 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-[#FFD100]/20"
                       >
-                         <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${viewedProfile?.privacySettings?.showBio !== 'private' ? 'left-7' : 'left-1'}`} />
-                      </button>
+                         <option value="public">Everyone</option>
+                         <option value="private">Only Me</option>
+                      </select>
                    </div>
 
                    <div className="pt-6 border-t border-zinc-100">

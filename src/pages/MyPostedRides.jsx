@@ -49,7 +49,7 @@ const MyPostedRides = () => {
     const q = query(
       collection(db, 'rides'),
       where('hostId', '==', currentUser.uid),
-      where('status', '==', 'open')
+      where('status', 'in', ['open', 'OPEN'])
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -118,51 +118,81 @@ const MyPostedRides = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-10">
           {rides.length > 0 ? (
             rides.map((ride) => (
-              <div key={ride.id} className="bg-white rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 skeuo-card relative overflow-hidden group">
-                <div className="flex justify-between items-start mb-8 md:mb-10">
-                  <div className="flex flex-col gap-4">
-                    <span className="bg-zinc-50 text-zinc-400 border border-zinc-100 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest w-max">
-                      {ride.status}
+              <div key={ride.id} className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 skeuo-card relative overflow-hidden group hover:scale-[1.01] transition-all duration-300">
+                {/* Header status and vehicle */}
+                <div className="flex justify-between items-center mb-6 border-b border-zinc-100 pb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-zinc-50 border border-zinc-100 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest text-zinc-400">
+                      {ride.status || 'Active Posted Ride'}
                     </span>
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-[#FFD100]/10 flex items-center justify-center text-[#FFD100]">
-                        <span className="material-symbols-outlined text-3xl">departure_board</span>
-                      </div>
-                      <h3 className="font-black text-xl md:text-2xl text-zinc-900 tracking-tight leading-tight">{ride.destination}</h3>
-                    </div>
+                    {(ride.carModel || ride.vehicleModel) && (
+                      <span className="bg-yellow-50 text-yellow-600 border border-yellow-100 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[12px]">directions_car</span>
+                        {ride.carModel || ride.vehicleModel}
+                      </span>
+                    )}
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] font-black text-zinc-300 uppercase tracking-widest mb-1">Total Fare</p>
-                    <p className="text-2xl md:text-4xl font-black text-zinc-900 tracking-tighter">₹{ride.fare}</p>
+                    <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest block mb-0.5">Total Fare</span>
+                    <span className="text-xl md:text-2xl font-black text-zinc-900 tracking-tighter">₹{ride.fare}</span>
                   </div>
                 </div>
 
-                <div className="space-y-6 mb-10">
-                  <div className="flex items-center gap-6">
-                    <div className="w-10 h-10 rounded-full bg-zinc-50 flex items-center justify-center text-zinc-400">
-                      <span className="material-symbols-outlined text-lg">calendar_today</span>
+                {/* Path Map */}
+                <div className="space-y-4 md:space-y-5 mb-6 relative">
+                  <div className="absolute left-[13px] md:left-[15px] top-4 bottom-4 w-0.5 bg-zinc-100"></div>
+                  
+                  {/* Pickup */}
+                  <div className="flex items-center gap-3 md:gap-4 relative z-10">
+                    <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-zinc-50 flex items-center justify-center text-zinc-400 skeuo-card border-none">
+                      <span className="material-symbols-outlined text-xs md:text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>location_on</span>
                     </div>
-                    <div>
-                      <p className="text-[10px] font-black text-zinc-300 uppercase tracking-widest">Departure</p>
-                      <p className="font-black text-zinc-700">{ride.date} at {formatTime12h(ride.time)}</p>
+                    <div className="flex-1">
+                      <p className="text-[8px] md:text-[9px] font-black text-zinc-400 uppercase tracking-widest">Pickup</p>
+                      <p className="text-zinc-700 font-bold text-sm md:text-base truncate">{ride.pickup}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-6">
-                    <div className="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center text-[#FFD100]">
-                      <span className="material-symbols-outlined text-lg">location_on</span>
+
+                  {/* Destination */}
+                  <div className="flex items-center gap-3 md:gap-4 relative z-10">
+                    <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-zinc-900 flex items-center justify-center text-[#FFD100] shadow-md">
+                      <span className="material-symbols-outlined text-xs md:text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>map</span>
                     </div>
-                    <div>
-                      <p className="text-[10px] font-black text-zinc-300 uppercase tracking-widest">Pickup Location</p>
-                      <p className="font-black text-zinc-900">{ride.pickup}</p>
+                    <div className="flex-1">
+                      <p className="text-[8px] md:text-[9px] font-black text-zinc-400 uppercase tracking-widest">Destination</p>
+                      <p className="text-zinc-900 font-black text-sm md:text-base truncate">{ride.destination}</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="border-t border-zinc-50 pt-8">
-                  <div className="flex items-center justify-between mb-8">
+                {/* Time & Seats Info Grid */}
+                <div className="grid grid-cols-2 gap-3 md:gap-4 mb-6 pt-4 border-t border-zinc-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-400">
+                      <span className="material-symbols-outlined text-base">calendar_today</span>
+                    </div>
                     <div>
-                      <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-3">
-                        Passengers ({ride.passengers?.length || 0}/{ride.seats} Seats)
+                      <p className="text-[8px] md:text-[9px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-0.5">Date & Time</p>
+                      <p className="text-xs md:text-sm font-black text-zinc-700">{ride.date} • {formatTime12h(ride.time)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-400">
+                      <span className="material-symbols-outlined text-base">airline_seat_recline_normal</span>
+                    </div>
+                    <div>
+                      <p className="text-[8px] md:text-[9px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-0.5">Seats</p>
+                      <p className="text-xs md:text-sm font-black text-zinc-700">{(ride.availableSeats !== undefined ? ride.availableSeats : (ride.seats || 4))} of {ride.seats || 4} left</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Passengers List Section */}
+                <div className="border-t border-zinc-50 pt-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-3">
+                        Confirmed Passengers ({ride.passengers?.length || 0})
                       </p>
                       <div className="flex -space-x-3">
                         {ride.passengers?.length > 0 ? (
@@ -177,7 +207,7 @@ const MyPostedRides = () => {
                           ))
                         ) : (
                           <div className="flex items-center gap-2 text-zinc-400">
-                            <span className="material-symbols-outlined text-lg italic">group_off</span>
+                            <span className="material-symbols-outlined text-base italic">group_off</span>
                             <span className="text-xs font-bold italic">No passengers joined yet</span>
                           </div>
                         )}
@@ -197,8 +227,8 @@ const MyPostedRides = () => {
                     </button>
                   </div>
                   
-                  <Link to={`/manage-requests/${ride.id}`} className="block w-full bg-zinc-900 text-white text-center font-black py-4 md:py-5 rounded-2xl hover:bg-zinc-800 transition-all shadow-xl active:scale-[0.98]">
-                    Manage Requests
+                  <Link to={`/ride/${ride.id}`} className="block w-full bg-zinc-900 text-white text-center font-black py-4 rounded-2xl hover:bg-zinc-800 transition-all shadow-xl active:scale-[0.98]">
+                    Manage Ride
                   </Link>
                 </div>
               </div>

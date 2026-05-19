@@ -6,6 +6,11 @@
 export const formatTime12h = (time24) => {
   if (!time24) return '';
   
+  const lowerTime = time24.toLowerCase();
+  if (lowerTime.includes('am') || lowerTime.includes('pm')) {
+    return time24;
+  }
+  
   try {
     const [hours, minutes] = time24.split(':');
     let h = parseInt(hours);

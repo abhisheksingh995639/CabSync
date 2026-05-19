@@ -92,7 +92,7 @@ const AdminDashboard = () => {
 
   const stats = [
     { label: 'Total Users', value: users.length, icon: 'group', color: 'bg-blue-500' },
-    { label: 'Active Rides', value: rides.filter(r => r.status === 'open').length, icon: 'directions_car', color: 'bg-green-500' },
+    { label: 'Active Rides', value: rides.filter(r => (r.status || 'open').toLowerCase() === 'open').length, icon: 'directions_car', color: 'bg-green-500' },
     { label: 'Verified Users', value: users.filter(u => u.isVerified).length, icon: 'verified', color: 'bg-yellow-500' },
     { label: 'Total Reports', value: reports.length, icon: 'report', color: 'bg-red-500' },
   ];
@@ -385,7 +385,7 @@ const AdminDashboard = () => {
                         </td>
                         <td className="px-6 py-4">
                           <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                            ride.status === 'open' ? 'bg-blue-100 text-blue-700' : 'bg-zinc-100 text-zinc-500'
+                            (ride.status || 'open').toLowerCase() === 'open' ? 'bg-blue-100 text-blue-700' : 'bg-zinc-100 text-zinc-500'
                           }`}>
                             {ride.status}
                           </span>

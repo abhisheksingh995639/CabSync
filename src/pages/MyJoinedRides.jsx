@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase';
-import { collection, query, where, onSnapshot, getDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { useNotification } from '../context/NotificationContext';
 import { formatTime12h } from '../utils/formatters';
 
@@ -37,7 +37,7 @@ const MyJoinedRides = () => {
       });
 
       const ridesData = await Promise.all(ridesPromises);
-      setJoinedRides(ridesData.filter(r => r !== null && r.status === 'open'));
+      setJoinedRides(ridesData.filter(r => r !== null && (r.status || 'open').toLowerCase() === 'open'));
       setLoading(false);
     }, (err) => {
       console.error("Error fetching joined rides:", err);
@@ -63,13 +63,15 @@ const MyJoinedRides = () => {
             const rideData = rideSnap.data();
             const passengers = rideData.passengers || [];
             const updatedPassengers = passengers.filter(id => id !== currentUser.uid);
+            const updatedPassengerDetails = (rideData.passengerDetails || []).filter(p => p.uid !== currentUser.uid);
             await updateDoc(rideRef, { 
               passengers: updatedPassengers,
-              availableSeats: (rideData.seats || 0) - updatedPassengers.length
+              availableSeats: (rideData.seats || 4) - updatedPassengers.length,
+              passengerDetails: updatedPassengerDetails
             });
           }
-          // 2. Update request status to cancelled
-          await updateDoc(doc(db, 'requests', requestId), { status: 'cancelled' });
+          // 2. Delete the request document completely
+          await deleteDoc(doc(db, 'requests', requestId));
           showNotification("Success", "You have successfully left the ride.");
         } catch (err) {
           console.error("Error leaving ride:", err);
@@ -113,52 +115,49 @@ const MyJoinedRides = () => {
               {confirmedRides.length > 0 ? (
                 <div className="space-y-6 md:space-y-10">
                   {confirmedRides.map((ride) => (
-                    <div key={ride.id} className="bg-white rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 skeuo-card relative overflow-hidden group">
-                      <div className="flex justify-between items-start mb-8 md:mb-10">
-                        <div className="flex flex-col gap-4">
+                    <div key={ride.id} className="bg-white rounded-[2rem] md:rounded-[3rem] p-6 md:p-8 skeuo-card relative overflow-hidden group">
+                      <div className="flex justify-between items-start mb-6">
+                        <div className="flex flex-col gap-3 min-w-0">
                           <span className="bg-green-50 text-green-700 border border-green-100 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest w-max flex items-center gap-1">
                             <span className="material-symbols-outlined text-xs" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
                             Confirmed
                           </span>
                           <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-zinc-900 flex items-center justify-center text-[#FFD100]">
+                            <div className="w-12 h-12 rounded-2xl bg-zinc-900 flex items-center justify-center text-[#FFD100] shrink-0">
                               <span className="material-symbols-outlined text-3xl">commute</span>
                             </div>
-                            <h3 className="font-black text-xl md:text-2xl text-zinc-900 tracking-tight leading-tight">{ride.destination}</h3>
+                            <div className="min-w-0">
+                              <h3 className="font-black text-lg md:text-xl text-zinc-900 tracking-tight leading-tight flex items-center gap-2 flex-wrap">
+                                <span className="truncate">{ride.pickup}</span>
+                                <span className="material-symbols-outlined text-zinc-400 text-sm">arrow_forward</span>
+                                <span className="truncate">{ride.destination}</span>
+                              </h3>
+                              <p className="text-zinc-400 font-medium text-[10px] mt-1 uppercase tracking-wider">Confirmed Carpool</p>
+                            </div>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right shrink-0">
                           <p className="text-[10px] font-black text-zinc-300 uppercase tracking-widest mb-1">Your Split</p>
-                          <p className="text-2xl md:text-4xl font-black text-zinc-900 tracking-tighter">₹{Math.round((ride.fare || 0) / ((ride.passengers?.length || 0) + 1))}</p>
+                          <p className="text-2xl md:text-3xl font-black text-zinc-900 tracking-tighter">₹{Math.round((ride.fare || 0) / ((ride.passengers?.length || 0) + 1))}</p>
                         </div>
                       </div>
 
-                      <div className="space-y-6 mb-10">
-                        <div className="flex items-center gap-6">
-                          <div className="w-10 h-10 rounded-full bg-zinc-50 flex items-center justify-center text-zinc-400">
-                            <span className="material-symbols-outlined text-lg">calendar_today</span>
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-black text-zinc-300 uppercase tracking-widest">Departure</p>
-                            <p className="font-black text-zinc-700">{ride.date} at {formatTime12h(ride.time)}</p>
-                          </div>
+                      <div className="grid grid-cols-2 gap-4 mb-6 pt-6 border-t border-zinc-100/60">
+                        <div className="min-w-0">
+                          <p className="text-[9px] font-black text-zinc-300 uppercase tracking-widest leading-none mb-1">Departure Date</p>
+                          <p className="text-xs md:text-sm font-bold text-zinc-700 truncate">{ride.date}</p>
                         </div>
-                        <div className="flex items-center gap-6">
-                          <div className="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center text-[#FFD100]">
-                            <span className="material-symbols-outlined text-lg">location_on</span>
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-black text-zinc-300 uppercase tracking-widest">Pickup Location</p>
-                            <p className="font-black text-zinc-900">{ride.pickup}</p>
-                          </div>
+                        <div className="min-w-0 text-right">
+                          <p className="text-[9px] font-black text-zinc-300 uppercase tracking-widest leading-none mb-1">Departure Time</p>
+                          <p className="text-xs md:text-sm font-black text-zinc-900 truncate">{formatTime12h(ride.time)}</p>
                         </div>
                       </div>
 
-                      <div className="flex gap-4 pt-8 border-t border-zinc-50">
-                        <Link to={`/chat/${ride.id}`} className="flex-1 bg-zinc-50 text-zinc-900 text-center font-black py-4 md:py-5 rounded-2xl hover:bg-zinc-100 transition-all active:scale-[0.98] border border-zinc-100">
+                      <div className="flex gap-4 pt-6 border-t border-zinc-50">
+                        <Link to={`/chat/${ride.id}`} className="flex-1 bg-zinc-50 text-zinc-900 text-center font-black py-3.5 md:py-4 rounded-2xl hover:bg-zinc-100 transition-all active:scale-[0.98] border border-zinc-100 text-sm">
                           Open Chat
                         </Link>
-                        <Link to={`/ride/${ride.id}`} className="flex-1 bg-zinc-900 text-[#FFD100] text-center font-black py-4 md:py-5 rounded-2xl hover:bg-zinc-800 transition-all shadow-xl active:scale-[0.98]">
+                        <Link to={`/ride/${ride.id}`} className="flex-1 bg-zinc-900 text-[#FFD100] text-center font-black py-3.5 md:py-4 rounded-2xl hover:bg-zinc-800 transition-all shadow-xl active:scale-[0.98] text-sm">
                           Ride Details
                         </Link>
                       </div>
