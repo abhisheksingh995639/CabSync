@@ -79,12 +79,6 @@ const Profile = () => {
     return false;
   };
 
-  const canViewBio = () => {
-    if (isOwnProfile) return true;
-    const preference = viewedProfile?.privacySettings?.showBio || 'public';
-    if (preference === 'public') return true;
-    return false;
-  };
 
   // Fetch target user's profile if not our own
   useEffect(() => {
@@ -455,11 +449,6 @@ const Profile = () => {
                 )}
               </div>
 
-              {canViewBio() && (
-                <p className="text-zinc-500 font-medium text-xs md:text-sm mt-3 leading-relaxed line-clamp-2">
-                  {viewedProfile?.bio || (isOwnProfile ? "No bio added yet. Edit your profile to tell the community about yourself." : "No bio added yet.")}
-                </p>
-              )}
 
 
             </div>
