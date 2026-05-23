@@ -2,6 +2,10 @@
 
 CabSync is a modern, responsive ride-sharing and carpooling web application built with React, Vite, Tailwind CSS, and Firebase. It connects people looking for rides with drivers heading in the same direction, making travel more affordable, social, and environmentally friendly.
 
+<img width="1919" height="911" alt="image" src="https://github.com/user-attachments/assets/f33fbe3d-80b1-405d-8811-ce6c4bf56dc3" />
+<img width="1919" height="910" alt="image" src="https://github.com/user-attachments/assets/d8206fea-c58a-4ba5-83dd-62d6342d8c5c" />
+
+
 ## 🚀 Features
 
 - **User Authentication:** Secure signup, login, and password recovery using Firebase Authentication.
