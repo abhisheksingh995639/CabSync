@@ -1,7 +1,7 @@
 # CabSync — Web Platform
 
 <p align="center">
-  <img src="assets/cabsync_logo.png" alt="CabSync Logo" width="120" />
+  <img width="120" alt="ic_cabsync_logo" src="https://github.com/user-attachments/assets/1bf40e57-3be8-4edc-8485-f521d99d2e83" />
 </p>
 
 <p align="center">
