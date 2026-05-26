@@ -276,7 +276,7 @@ This web platform is part of the **CabSync** monorepo:
 
 | Project | Description |
 |---|---|
-| [`CabSync-Website`](.) | ← You are here (React/Vite web app) |
+| [`CabSync-Website`](https://github.com/abhisheksingh995639/CabSync-Website) | ← You are here (React/Vite web app) |
 | [`Cabsync-App`](https://github.com/abhisheksingh995639/CabSync-App) | Android native app (Jetpack Compose + Kotlin) |
 
 Both share the same Firebase project (Firestore, Auth, FCM).
