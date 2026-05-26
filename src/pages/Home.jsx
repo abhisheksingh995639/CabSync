@@ -26,9 +26,10 @@ const Home = () => {
       <header className="fixed top-0 w-full z-50 border-b bg-white/80 backdrop-blur-xl border-zinc-200 shadow-sm">
         <div className="flex justify-between items-center h-16 px-4 md:px-12 max-w-screen-2xl mx-auto">
           <Link to="/" className="flex items-center gap-2 md:gap-3">
-            <div className="w-8 h-8 md:w-9 md:h-9 bg-[#FFD100] rounded-xl flex items-center justify-center shadow-sm">
-              <span className="text-zinc-900 font-black text-lg md:text-xl leading-none">c</span>
+            <div className="w-8 h-8 md:w-9 md:h-9 bg-zinc-900 rounded-full flex items-center justify-center shadow-sm shrink-0 overflow-hidden">
+              <img src="/ic_cabsync_logo.png" alt="CabSync Logo" className="w-full h-full object-contain scale-[1.35]" />
             </div>
+
             <div className="text-xl md:text-2xl font-black tracking-tighter text-zinc-900">CabSync</div>
           </Link>
           <div className="flex items-center gap-2 md:gap-4">
@@ -40,7 +41,7 @@ const Home = () => {
 
       <main className="pt-16">
         {/* Hero Section */}
-        <section className="relative overflow-hidden px-4 md:px-12 py-8 md:py-24 max-w-screen-2xl mx-auto">
+        <section className="relative overflow-hidden px-4 md:px-12 pt-2 pb-12 md:pt-6 md:pb-24 max-w-screen-2xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-16 items-center">
             <div className="z-10">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-yellow-100 rounded-full text-yellow-700 text-[10px] font-black uppercase tracking-widest mb-4 md:mb-6">

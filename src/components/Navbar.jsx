@@ -29,9 +29,10 @@ const Navbar = () => {
       <header className="sticky top-0 w-full z-50 border-b bg-white/80 backdrop-blur-xl border-zinc-200 shadow-sm">
         <div className="flex justify-between items-center h-16 w-full px-6 max-w-screen-2xl mx-auto antialiased relative">
           <Link to="/dashboard" className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-[#FFD100] rounded-xl flex items-center justify-center shadow-sm">
-              <span className="text-zinc-900 font-black text-xl leading-none">c</span>
+            <div className="w-9 h-9 bg-zinc-900 rounded-full flex items-center justify-center shadow-sm shrink-0 overflow-hidden">
+              <img src="/ic_cabsync_logo.png" alt="CabSync Logo" className="w-full h-full object-contain scale-[1.35]" />
             </div>
+
             <div className="text-2xl font-black tracking-tighter text-zinc-900">CabSync</div>
           </Link>
           

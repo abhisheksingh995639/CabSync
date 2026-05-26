@@ -38,7 +38,15 @@ const BrowseRides = () => {
 
   const timeToMinutes = (timeStr) => {
     if (!timeStr) return 0;
-    const [h, m] = timeStr.split(':').map(Number);
+    const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM|am|pm)?/);
+    if (!match) return 0;
+    let h = parseInt(match[1], 10);
+    const m = parseInt(match[2], 10);
+    const ampm = match[3] ? match[3].toUpperCase() : null;
+
+    if (ampm === 'PM' && h < 12) h += 12;
+    if (ampm === 'AM' && h === 12) h = 0;
+
     return h * 60 + m;
   };
 

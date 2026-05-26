@@ -95,7 +95,9 @@ const Footer = () => {
 
         <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
           <Link to="/admin" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <div className="w-8 h-8 bg-[#FFD100] rounded flex items-center justify-center font-bold text-zinc-900">c</div>
+            <div className="w-8 h-8 bg-zinc-900 rounded-full flex items-center justify-center shadow-sm shrink-0 overflow-hidden">
+              <img src="/ic_cabsync_logo.png" alt="CabSync Logo" className="w-full h-full object-contain scale-[1.35]" />
+            </div>
             <div className="text-2xl font-black text-zinc-900 tracking-tighter">CabSync</div>
           </Link>
           <p className="text-zinc-400 text-sm font-medium">

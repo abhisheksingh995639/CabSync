@@ -11,6 +11,7 @@ import {
   sendEmailVerification
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import KineticDotsLoader from '../components/ui/kinetic-dots-loader';
 
 const AuthContext = createContext();
 
@@ -155,6 +156,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     let unsubscribeProfile = null;
+    const startTime = Date.now();
 
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
@@ -162,9 +164,15 @@ export const AuthProvider = ({ children }) => {
       // Clear previous profile listener if any
       if (unsubscribeProfile) unsubscribeProfile();
 
+      const finishLoading = () => {
+        const elapsed = Date.now() - startTime;
+        const delay = Math.max(0, 3000 - elapsed);
+        setTimeout(() => setLoading(false), delay);
+      };
+
       if (user) {
         // We have the auth user, show the app immediately
-        setLoading(false);
+        finishLoading();
         
         // Use onSnapshot for instant cache access and real-time updates
         const profileRef = doc(db, 'users', user.uid);
@@ -202,7 +210,7 @@ export const AuthProvider = ({ children }) => {
         });
       } else {
         setUserProfile(null);
-        setLoading(false);
+        finishLoading();
       }
     });
 
@@ -227,7 +235,7 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider value={value}>
       {!loading ? children : (
         <div className="flex items-center justify-center min-h-screen bg-surface">
-           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+           <KineticDotsLoader />
         </div>
       )}
     </AuthContext.Provider>
