@@ -113,6 +113,32 @@ const RideDetails = () => {
         status: 'pending',
         timestamp: serverTimestamp()
       });
+      
+      // Send push notification to host
+      try {
+        const hostDoc = await getDoc(doc(db, 'users', ride.hostId));
+        if (hostDoc.exists()) {
+          const hostToken = hostDoc.data().fcmToken;
+          if (hostToken) {
+            const authToken = await currentUser.getIdToken(false);
+            await fetch('https://cabsync.netlify.app/.netlify/functions/sendPush', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                token: authToken,
+                targetToken: hostToken,
+                title: 'New Ride Request',
+                body: `${userProfile?.name || currentUser.displayName || 'Anonymous'} wants to join your ride from ${ride.pickup} to ${ride.destination}.`
+              })
+            });
+          }
+        }
+      } catch (pushErr) {
+        console.error("Error sending push notification:", pushErr);
+      }
+
       showNotification('Request Sent', 'Wait for the host to approve your request.');
     } catch (err) {
       console.error("Error sending request:", err);
