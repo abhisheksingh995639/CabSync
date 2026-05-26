@@ -1,115 +1,294 @@
-# CabSync
+# CabSync — Web Platform
 
-CabSync is a modern, responsive ride-sharing and carpooling web application built with React, Vite, Tailwind CSS, and Firebase. It connects people looking for rides with drivers heading in the same direction, making travel more affordable, social, and environmentally friendly.
+<p align="center">
+  <img src="assets/cabsync_logo.png" alt="CabSync Logo" width="120" />
+</p>
 
-## 🚀 Features
+<p align="center">
+  <strong>A modern ride-sharing & carpooling platform connecting travelers heading in the same direction.</strong>
+</p>
 
-- **User Authentication:** Secure signup, login, and password recovery using Firebase Authentication.
-- **Dashboard:** A central hub to manage your upcoming rides, recent activity, and quick actions.
-- **Post a Ride:** Drivers can easily publish their planned routes, departure times, and available seats.
-- **Browse & Search Rides:** Passengers can search for available rides based on their destination and preferences.
-- **Ride Management:** View detailed ride information, book seats, and manage your posted or joined rides.
-- **Real-time Messaging:** In-app chat functionality to communicate with drivers or passengers before the trip.
-- **Profile System:** User profiles with avatars, personal information, and ride history.
-- **Rating System:** Rate and review users after a completed ride to build a trustworthy community.
-- **Admin Dashboard:** A dedicated interface for platform administrators to monitor and manage activity.
-- **Responsive Design:** A mobile-first approach ensuring a seamless experience across all devices.
+<p align="center">
+  <a href="https://cabsync.netlify.app" target="_blank">
+    <img src="https://img.shields.io/badge/Live%20Demo-cabsync.netlify.app-FFD100?style=for-the-badge&logo=netlify&logoColor=black" alt="Live Demo" />
+  </a>
+  &nbsp;
+  <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React" />
+  &nbsp;
+  <img src="https://img.shields.io/badge/Firebase-Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase" />
+  &nbsp;
+  <img src="https://img.shields.io/badge/Deployed%20on-Netlify-00C7B7?style=for-the-badge&logo=netlify&logoColor=white" alt="Netlify" />
+</p>
+
+---
+
+## 📖 Overview
+
+CabSync is a full-stack web application that allows users to post and join shared cab/auto rides. Hosts publish their planned routes with available seats and a fare, while passengers can browse, request to join, and chat with fellow riders — all in real time.
+
+This repository contains the **Web Platform** (React/Vite). The companion **Android App** lives in the `Cabsync-App` sibling directory and shares the same Firebase backend.
+
+---
+
+## ✨ Features
+
+| Feature | Description |
+|---|---|
+| 🔐 **Authentication** | Email/password signup & login, Google OAuth, password reset |
+| 🏠 **Dashboard** | Central hub for upcoming rides, pending requests, and quick actions |
+| 🗺️ **Browse Rides** | Search by pickup, destination, date, and time with smart matching |
+| 🚗 **Post a Ride** | Hosts publish routes, set seats, fare, AC preference, and car model |
+| 📋 **Ride Details** | Live seat count, passenger list, fare split calculator, join requests |
+| ✅ **Request System** | Passengers request → Host approves/rejects → both get notified |
+| 💬 **Real-time Chat** | Per-ride group chat using Firestore live listeners |
+| 📨 **Push Notifications** | FCM-powered push notifications via a Netlify serverless function |
+| 👤 **Public Profiles** | View any user's ride history, ratings, and trust indicators |
+| ⭐ **Rating & Reviews** | Mutual post-ride rating system to build community trust |
+| 🛡️ **Admin Dashboard** | Manage users, rides, and reports; ban/unban accounts |
+| 📜 **Ride History** | Archive of all completed and cancelled rides |
+| 📱 **Fully Responsive** | Mobile-first layout that works on every screen size |
+| 🌙 **Theme Support** | Light and dark mode with system preference detection |
+
+---
 
 ## 🛠️ Tech Stack
 
-- **Frontend Framework:** [React 19](https://react.dev/)
-- **Build Tool:** [Vite](https://vitejs.dev/)
-- **Routing:** [React Router v7](https://reactrouter.com/)
-- **Styling:** [Tailwind CSS](https://tailwindcss.com/) with a custom "Sunflower Fields" design system.
-- **UI Components:** [Material-UI (MUI)](https://mui.com/) & custom Tailwind components.
-- **Icons:** [Lucide React](https://lucide.dev/)
-- **Backend & Database:** [Firebase](https://firebase.google.com/) (Auth, Firestore)
+| Layer | Technology |
+|---|---|
+| **Framework** | [React 19](https://react.dev/) |
+| **Build Tool** | [Vite 8](https://vitejs.dev/) |
+| **Routing** | [React Router v7](https://reactrouter.com/) |
+| **Styling** | [Tailwind CSS v3](https://tailwindcss.com/) + custom "Sunflower Fields" design system |
+| **UI Components** | [Material-UI (MUI)](https://mui.com/) + custom Tailwind components |
+| **Icons** | [Lucide React](https://lucide.dev/) + Google Material Symbols |
+| **Auth & Database** | [Firebase Authentication](https://firebase.google.com/products/auth) + [Firestore](https://firebase.google.com/products/firestore) |
+| **Push Notifications** | [Firebase Cloud Messaging (FCM)](https://firebase.google.com/products/cloud-messaging) |
+| **Serverless Backend** | [Netlify Functions](https://docs.netlify.com/functions/overview/) (Node.js) |
+| **Hosting** | [Netlify](https://netlify.com/) |
 
-## 🎨 Design System
+---
 
-CabSync uses a custom design system called **"Sunflower Fields"**, following a strict 60-30-10 UI/UX rule to create a cohesive, modern light theme:
+## 🎨 Design System — "Sunflower Fields"
 
-- **60% Dominant:** `#FFFFFF` (Primary Background) & `#D6D6D6` (Light Gray for borders/structural separation)
-- **30% Secondary:** `#202020` (Primary Text) & `#333533` (Secondary Text)
-- **10% Accent:** `#FFD100` (Deep Yellow/Gold for primary accents) & `#FFEE32` (Light Yellow for hover states)
+CabSync uses a custom design system with a strict 60-30-10 color rule:
 
-Typography relies on the **Inter** font family for a clean, highly readable interface.
+| Role | Color | Hex |
+|---|---|---|
+| **60% Dominant** | Primary Background | `#FFFFFF` |
+| **60% Dominant** | Structural Separator | `#D6D6D6` |
+| **30% Secondary** | Primary Text | `#202020` |
+| **30% Secondary** | Secondary Text | `#333533` |
+| **10% Accent** | Brand Yellow (primary) | `#FFD100` |
+| **10% Accent** | Brand Yellow (hover) | `#FFEE32` |
 
-## ⚙️ Installation & Setup
+**Typography:** [Inter](https://fonts.google.com/specimen/Inter) — Clean, highly legible, modern sans-serif.
 
-Follow these instructions to get a local copy of the project up and running.
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) (v18 or higher recommended)
-- npm or yarn
-- A Firebase project
-
-### Steps
-
-1. **Clone the repository (or download the source code):**
-   ```bash
-   git clone <your-repo-url>
-   cd CabSync-Website
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Configure Environment Variables:**
-   Create a `.env` file in the root directory and add your Firebase configuration variables. 
-   *(Note: Ensure you have Firebase set up in your Firebase Console)*
-   ```env
-   VITE_FIREBASE_API_KEY=your_api_key
-   VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
-   VITE_FIREBASE_PROJECT_ID=your_project_id
-   VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
-   VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
-   VITE_FIREBASE_APP_ID=your_app_id
-   ```
-
-4. **Start the development server:**
-   ```bash
-   npm run dev
-   ```
-
-5. **Open the app:**
-   Open [http://localhost:5173](http://localhost:5173) in your browser to view the application.
-
-## 📜 Scripts
-
-- `npm run dev`: Starts the local development server using Vite.
-- `npm run build`: Bundles the app into static files for production.
-- `npm run preview`: Bootstraps a local web server to preview the production build.
-- `npm run lint`: Runs ESLint to analyze the code for potential errors.
+---
 
 ## 📁 Project Structure
 
 ```
 CabSync-Website/
-├── public/               # Static assets
+│
+├── netlify/
+│   └── functions/
+│       └── sendPush.js          # Serverless function: FCM push notification relay
+│
+├── public/
+│   └── _redirects               # Netlify SPA redirect rule
+│
 ├── src/
-│   ├── assets/           # Images, icons, etc.
-│   ├── components/       # Reusable UI components (Navbar, Footer, ProtectedRoute, etc.)
-│   ├── context/          # React Context providers (Auth, Theme, Notification)
-│   ├── pages/            # Page components (Dashboard, Login, BrowseRides, etc.)
-│   ├── utils/            # Helper functions and utilities
-│   ├── App.jsx           # Main application component and routing setup
-│   ├── firebase.js       # Firebase initialization and configuration
-│   ├── main.jsx          # React application entry point
-│   └── index.css         # Global CSS and Tailwind directives
-├── index.html            # Main HTML template
-├── tailwind.config.js    # Tailwind CSS configuration
-├── vite.config.js        # Vite configuration
-└── package.json          # Project metadata and dependencies
+│   ├── components/
+│   │   ├── ui/                  # Low-level UI primitives
+│   │   ├── BannedScreen.jsx     # Shown to banned/restricted users
+│   │   ├── Footer.jsx           # Site-wide footer
+│   │   ├── Navbar.jsx           # Top navigation bar
+│   │   ├── ProtectedRoute.jsx   # Auth guard wrapper for private routes
+│   │   ├── RestrictedArea.jsx   # Admin-only area guard
+│   │   └── RideCard.jsx         # Reusable ride listing card
+│   │
+│   ├── context/
+│   │   ├── AppContext.jsx        # Global app state
+│   │   ├── AuthContext.jsx       # Firebase auth state, user profile
+│   │   ├── NotificationContext.jsx # Toast/confirmation dialog provider
+│   │   └── ThemeContext.jsx      # Light/dark theme toggle
+│   │
+│   ├── pages/
+│   │   ├── AdminDashboard.jsx    # Admin: user/ride management panel
+│   │   ├── BookingConfirmation.jsx
+│   │   ├── BrowseRides.jsx       # Search & filter all available rides
+│   │   ├── Chat.jsx              # Per-ride real-time group chat
+│   │   ├── ConfirmedRide.jsx     # Confirmed booking summary
+│   │   ├── Dashboard.jsx         # User home: active & upcoming rides
+│   │   ├── EditProfile.jsx       # Profile photo & info editor
+│   │   ├── ForgotPassword.jsx    # Password reset flow
+│   │   ├── History.jsx           # Past & cancelled rides archive
+│   │   ├── Home.jsx              # Public landing page
+│   │   ├── Login.jsx             # Email + Google login
+│   │   ├── Messages.jsx          # All conversations list
+│   │   ├── MyJoinedRides.jsx     # Rides the user has joined as passenger
+│   │   ├── MyPostedRides.jsx     # Rides the user has posted as host
+│   │   ├── PostRide.jsx          # Create/publish a new ride
+│   │   ├── Profile.jsx           # Own profile with stats & reviews
+│   │   ├── PublicProfile.jsx     # Any user's public profile
+│   │   ├── RateRide.jsx          # Post-ride mutual rating page
+│   │   ├── RideDetails.jsx       # Full ride info, join request, chat link
+│   │   ├── Settings.jsx          # Account settings & preferences
+│   │   └── Signup.jsx            # New account registration
+│   │
+│   ├── utils/
+│   │   └── formatters.js         # Date, time & string formatters
+│   │
+│   ├── App.jsx                   # Root component & all route definitions
+│   ├── firebase.js               # Firebase SDK initialization
+│   ├── index.css                 # Global styles & Tailwind base
+│   └── main.jsx                  # React app entry point
+│
+├── index.html                    # HTML shell & font imports
+├── tailwind.config.js            # Tailwind theme & plugin config
+├── vite.config.js                # Vite bundler config
+└── package.json                  # Dependencies & npm scripts
 ```
 
-## 🤝 Contributing
+---
 
-Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/yourusername/CabSync-Website/issues) if you want to contribute.
+## ⚙️ Local Setup
+
+### Prerequisites
+
+- **Node.js** v18 or higher
+- **npm** v9 or higher
+- A **Firebase project** with Authentication and Firestore enabled
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/yourusername/CabsyncWhole.git
+cd CabsyncWhole/CabSync-Website
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure Firebase
+
+The Firebase config is hardcoded in [`src/firebase.js`](src/firebase.js). If you fork this project for your own use, replace the `firebaseConfig` object with your own Firebase project credentials from the [Firebase Console](https://console.firebase.google.com/).
+
+### 4. Start the development server
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+---
+
+## 🚀 Deployment (Netlify)
+
+The site is deployed automatically via Netlify's GitHub integration. Every push to the `main` branch triggers a new production deploy.
+
+### Build Settings (in Netlify Dashboard)
+
+| Setting | Value |
+|---|---|
+| **Build command** | `npm run build` |
+| **Publish directory** | `dist` |
+| **Functions directory** | `netlify/functions` |
+
+### Required Environment Variable
+
+The push notification serverless function requires one secret to be set in **Netlify Dashboard → Site Settings → Environment Variables**:
+
+| Key | Value |
+|---|---|
+| `FIREBASE_SERVICE_ACCOUNT` | The full JSON content of your Firebase Admin SDK service account private key |
+
+> **How to get the service account key:**
+> Firebase Console → Project Settings → Service Accounts → Generate new private key → Download JSON → paste the entire JSON as the value.
+
+### SPA Routing
+
+A [`public/_redirects`](public/_redirects) file is included to ensure Netlify correctly handles client-side React Router routes:
+
+```
+/*  /index.html  200
+```
+
+---
+
+## 🔔 Push Notification Architecture
+
+Push notifications are delivered without any paid third-party service, using only Firebase's free quota.
+
+```
+Passenger clicks "Request to Join"
+         │
+         ▼
+  [Website / Android App]
+  1. Writes request doc to Firestore
+  2. Fetches host's FCM token from Firestore
+  3. Gets own Firebase Auth ID token
+  4. POST → https://cabsync.netlify.app/.netlify/functions/sendPush
+         │
+         ▼
+  [Netlify Function: sendPush.js]
+  1. Verifies the caller's Firebase Auth ID token
+  2. Builds FCM message payload
+  3. Sends notification via Firebase Admin SDK
+         │
+         ▼
+  [Host's Android Device]
+  Receives push notification: "X wants to join your ride"
+```
+
+---
+
+## 🗄️ Firestore Data Model
+
+| Collection | Key Fields |
+|---|---|
+| `users` | `uid`, `name`, `email`, `photoUrl`, `fcmToken`, `rating`, `isBanned` |
+| `rides` | `hostId`, `pickup`, `destination`, `date`, `time`, `fare`, `seats`, `availableSeats`, `status`, `passengers[]` |
+| `requests` | `rideId`, `passengerId`, `hostId`, `status` (`pending`/`approved`/`rejected`/`cancelled`) |
+| `messages` | `rideId`, `senderId`, `senderName`, `text`, `timestamp` |
+| `ratings` | `rideId`, `raterId`, `ratedUserId`, `score`, `review` |
+
+---
+
+## 📜 Available Scripts
+
+| Script | Description |
+|---|---|
+| `npm run dev` | Start the Vite development server with HMR |
+| `npm run build` | Build the production bundle to `dist/` |
+| `npm run preview` | Preview the production build locally |
+| `npm run lint` | Run ESLint to check for code issues |
+
+---
+
+## 🤝 Related Projects
+
+This web platform is part of the **CabSync** monorepo:
+
+| Project | Description |
+|---|---|
+| [`CabSync-Website`](.) | ← You are here (React/Vite web app) |
+| [`Cabsync-App`](../Cabsync-App) | Android native app (Jetpack Compose + Kotlin) |
+
+Both share the same Firebase project (Firestore, Auth, FCM).
+
+---
 
 ## 📄 License
 
 This project is open-source and available under the [MIT License](LICENSE).
+
+---
+
+<p align="center">
+  Made with ❤️ by the CabSync team &nbsp;·&nbsp; <a href="https://cabsync.netlify.app">cabsync.netlify.app</a>
+</p>
