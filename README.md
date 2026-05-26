@@ -1,7 +1,7 @@
 # CabSync — Web Platform
 
 <p align="center">
-  <img src="assets/cabsync_logo.png" alt="CabSync Logo" width="120" />
+  <img width="120" alt="ic_cabsync_logo" src="https://github.com/user-attachments/assets/1bf40e57-3be8-4edc-8485-f521d99d2e83" />
 </p>
 
 <p align="center">
@@ -276,8 +276,8 @@ This web platform is part of the **CabSync** monorepo:
 
 | Project | Description |
 |---|---|
-| [`CabSync-Website`](.) | ← You are here (React/Vite web app) |
-| [`Cabsync-App`](../Cabsync-App) | Android native app (Jetpack Compose + Kotlin) |
+| [`CabSync-Website`](https://github.com/abhisheksingh995639/CabSync-Website) | ← You are here (React/Vite web app) |
+| [`Cabsync-App`](https://github.com/abhisheksingh995639/CabSync-App) | Android native app (Jetpack Compose + Kotlin) |
 
 Both share the same Firebase project (Firestore, Auth, FCM).
 
@@ -290,5 +290,4 @@ This project is open-source and available under the [MIT License](LICENSE).
 ---
 
 <p align="center">
-  Made with ❤️ by the CabSync team &nbsp;·&nbsp; <a href="https://cabsync.netlify.app">cabsync.netlify.app</a>
-</p>
+  Made with ❤️ for VIT Bhopal Students
