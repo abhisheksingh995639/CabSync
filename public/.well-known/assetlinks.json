@@ -1,0 +1,9 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.cabsync.app",
+    "sha256_cert_fingerprints":
+    ["94:C5:BC:F6:4B:76:05:BA:43:30:35:27:91:41:D1:62:C9:8F:6C:49:39:34:7F:05:FB:3C:04:4C:A6:14:86:0A"]
+  }
+}]
