@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { db } from '../firebase';
 import { collection, onSnapshot, query, orderBy, where, addDoc, serverTimestamp } from 'firebase/firestore';
 import { formatTime12h } from '../utils/formatters';
 import Slider from '@mui/material/Slider';
 
 const BrowseRides = () => {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const searchFrom = searchParams.get('from') || '';
+  const searchTo = searchParams.get('to') || '';
+  const searchDate = searchParams.get('date') || '';
+  const searchTime = searchParams.get('time') || '';
+  const isAdvancedSearch = Boolean(searchFrom && searchTo && searchDate && searchTime);
+
   const [rides, setRides] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
@@ -74,9 +82,7 @@ const BrowseRides = () => {
   }, []);
 
 
-  const filteredRides = rides.filter(ride => {
-    const matchesSearch = (ride.destination || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (ride.pickup || "").toLowerCase().includes(searchTerm.toLowerCase());
+  const baseFilteredRides = rides.filter(ride => {
     const matchesPrice = (ride.fare || 0) <= maxPrice;
     const matchesType = selectedType === 'Any' || (
       selectedType === 'AC' 
@@ -85,7 +91,7 @@ const BrowseRides = () => {
     );
     
     const rideTimeMins = timeToMinutes(ride.time);
-    const matchesTime = rideTimeMins >= startTime && rideTimeMins <= endTime;
+    const matchesTimeFilter = rideTimeMins >= startTime && rideTimeMins <= endTime;
 
     const matchesVehicleType = selectedVehicleType === 'Any' || 
       (ride.carModel || 'Sedan').toLowerCase() === selectedVehicleType.toLowerCase();
@@ -93,8 +99,170 @@ const BrowseRides = () => {
     const rideSeats = ride.availableSeats !== undefined ? ride.availableSeats : (ride.seats || 4);
     const matchesMinSeats = rideSeats >= minSeats;
 
-    return matchesSearch && matchesPrice && matchesType && matchesTime && matchesVehicleType && matchesMinSeats;
+    return matchesPrice && matchesType && matchesTimeFilter && matchesVehicleType && matchesMinSeats;
   });
+
+  const normalizeDate = (d) => {
+    if (!d) return '';
+    const clean = d.trim().replace(/-/g, "/");
+    const parts = clean.split("/");
+    if (parts.length === 3 && parts[0].length === 4) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return clean;
+  };
+
+  let exactMatches = [];
+  let similarRides = [];
+  let simpleRides = [];
+
+  if (isAdvancedSearch) {
+    const normTargetDate = normalizeDate(searchDate);
+    const targetMins = timeToMinutes(searchTime);
+
+    const locationMatched = baseFilteredRides.filter(ride => {
+      const matchP = (ride.pickup || "").toLowerCase().includes(searchFrom.toLowerCase());
+      const matchD = (ride.destination || "").toLowerCase().includes(searchTo.toLowerCase());
+      return matchP && matchD;
+    });
+
+    exactMatches = locationMatched.filter(ride => {
+      return normalizeDate(ride.date) === normTargetDate && ride.time === searchTime;
+    });
+
+    similarRides = locationMatched.filter(ride => !exactMatches.includes(ride));
+
+    similarRides.sort((a, b) => {
+      const aDateMatch = normalizeDate(a.date) === normTargetDate ? 0 : 1;
+      const bDateMatch = normalizeDate(b.date) === normTargetDate ? 0 : 1;
+      if (aDateMatch !== bDateMatch) return aDateMatch - bDateMatch;
+
+      const aTimeMins = timeToMinutes(a.time);
+      const bTimeMins = timeToMinutes(b.time);
+      const aTimeDiff = Math.abs(aTimeMins - targetMins);
+      const bTimeDiff = Math.abs(bTimeMins - targetMins);
+      if (aTimeDiff !== bTimeDiff) return aTimeDiff - bTimeDiff;
+
+      return (a.fare || 0) - (b.fare || 0);
+    });
+
+    exactMatches.sort((a, b) => (a.fare || 0) - (b.fare || 0));
+
+  } else {
+    simpleRides = baseFilteredRides;
+  }
+
+  const advancedRides = isAdvancedSearch ? [...exactMatches, ...similarRides] : simpleRides;
+
+  const filteredRides = advancedRides.filter(ride => {
+    if (!searchTerm) return true;
+    return (ride.destination || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+           (ride.pickup || "").toLowerCase().includes(searchTerm.toLowerCase());
+  });
+
+  const RideCard = ({ ride }) => (
+    <Link key={ride.id} to={`/ride/${ride.id}`} className="bg-white rounded-2xl md:rounded-[2rem] p-4 md:p-6 lg:p-8 skeuo-card flex flex-col hover:-translate-y-1.5 transition-all duration-500 group">
+      <div className="flex justify-between items-start mb-4 md:mb-8">
+        <div className="flex items-center gap-2 md:gap-4">
+          <img 
+            alt={ride.hostName} 
+            className="w-8 h-8 md:w-14 md:h-14 rounded-lg md:rounded-2xl skeuo-card object-cover" 
+            src={ride.hostPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(ride.hostName)}&background=FFD100&color=000000`}
+            onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(ride.hostName)}&background=FFD100&color=000000` }}
+          />
+          <div>
+            <h3 className="font-black text-zinc-900 text-sm md:text-base">{ride.hostName}</h3>
+            <div className="flex gap-1.5 md:gap-2 mt-0.5 md:mt-1">
+              <div className="flex items-center text-[8px] md:text-[10px] font-black text-yellow-600 bg-yellow-50 px-1.5 md:px-2 py-0.5 rounded-md uppercase tracking-widest">
+                <span className="material-symbols-outlined text-[10px] md:text-[12px] mr-0.5 md:mr-1" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                {ride.rating ? ride.rating.toFixed(1) : '5.0'}
+              </div>
+              {ride.rideType && (
+                <div className="flex items-center text-[8px] md:text-[10px] font-black text-zinc-400 bg-zinc-50 px-1.5 md:px-2 py-0.5 rounded-md uppercase tracking-widest border border-zinc-100">
+                  <span className="material-symbols-outlined text-[10px] md:text-[12px] mr-0.5 md:mr-1">ac_unit</span>
+                  {ride.rideType}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col items-end">
+          <span className="text-lg md:text-3xl font-black text-zinc-900 tracking-tighter">₹{Math.round((ride.fare || 0) / ((ride.passengers?.length || 0) + 1))}</span>
+          <span className="text-[7px] md:text-[9px] font-black text-zinc-400 uppercase tracking-widest mt-0.5">per person</span>
+        </div>
+      </div>
+
+      <div className="space-y-4 md:space-y-6 mb-4 md:mb-8 relative">
+        <div className="absolute left-[13px] md:left-[15px] top-4 bottom-4 w-0.5 bg-zinc-100 group-hover:bg-[#FFD100]/30 transition-colors"></div>
+        
+        <div className="flex items-center gap-3 md:gap-6 relative z-10">
+          <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-zinc-50 flex items-center justify-center text-zinc-400 group-hover:bg-white transition-all skeuo-card border-none text-[10px]">
+            <span className="material-symbols-outlined text-xs md:text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>location_on</span>
+          </div>
+          <div className="flex-1">
+            <p className="text-[8px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest">Pickup</p>
+            <p className="text-zinc-600 font-bold text-sm md:text-base truncate">{ride.pickup}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 md:gap-6 relative z-10">
+          <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-zinc-900 flex items-center justify-center text-[#FFD100] shadow-lg">
+            <span className="material-symbols-outlined text-xs md:text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>map</span>
+          </div>
+          <div className="flex-1">
+            <p className="text-[8px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest">Destination</p>
+            <p className="text-zinc-900 font-black text-sm md:text-base truncate">{ride.destination}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-y-4 gap-x-3 md:gap-y-6 md:gap-x-4 mb-4 md:mb-8 pt-4 md:pt-6 border-t border-zinc-50">
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-400">
+            <span className="material-symbols-outlined text-lg md:text-xl">calendar_today</span>
+          </div>
+          <div>
+            <p className="text-[8px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-0.5 md:mb-1">Date</p>
+            <p className="text-xs md:text-sm font-black text-zinc-900">{ride.date}</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-400">
+            <span className="material-symbols-outlined text-lg md:text-xl">schedule</span>
+          </div>
+          <div>
+            <p className="text-[8px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-0.5 md:mb-1">Time</p>
+            <p className="text-xs md:text-sm font-black text-zinc-900">{formatTime12h(ride.time)}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-400">
+            <span className="material-symbols-outlined text-lg md:text-xl">directions_car</span>
+          </div>
+          <div>
+            <p className="text-[8px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-0.5 md:mb-1">Vehicle</p>
+            <p className="text-xs md:text-sm font-black text-zinc-900 truncate max-w-[100px]">{ride.carModel || 'Sedan'}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-400">
+            <span className="material-symbols-outlined text-lg md:text-xl">group</span>
+          </div>
+          <div>
+            <p className="text-[8px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-0.5 md:mb-1">Seats</p>
+            <p className="text-xs md:text-sm font-black text-zinc-900">{(ride.availableSeats !== undefined ? ride.availableSeats : (ride.seats || 4))} left</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="w-full py-2.5 md:py-4 bg-zinc-900 text-[#FFD100] text-center font-black rounded-xl md:rounded-2xl hover:bg-zinc-800 transition-all shadow-lg active:scale-[0.98] text-sm md:text-base">
+        Join Now
+      </div>
+    </Link>
+  );
 
   return (
     <div className="bg-[#F5F5F0] min-h-screen">
@@ -311,121 +479,45 @@ const BrowseRides = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
               {filteredRides.length > 0 ? (
-                filteredRides.map(ride => (
-                  <Link key={ride.id} to={`/ride/${ride.id}`} className="bg-white rounded-2xl md:rounded-[2rem] p-4 md:p-6 lg:p-8 skeuo-card flex flex-col hover:-translate-y-1.5 transition-all duration-500 group">
-                    <div className="flex justify-between items-start mb-4 md:mb-8">
-                      <div className="flex items-center gap-2 md:gap-4">
-                        <img 
-                          alt={ride.hostName} 
-                          className="w-8 h-8 md:w-14 md:h-14 rounded-lg md:rounded-2xl skeuo-card object-cover" 
-                          src={ride.hostPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(ride.hostName)}&background=FFD100&color=000000`}
-                          onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(ride.hostName)}&background=FFD100&color=000000` }}
-                        />
-                        <div>
-                          <h3 className="font-black text-zinc-900 text-sm md:text-base">{ride.hostName}</h3>
-                          <div className="flex gap-1.5 md:gap-2 mt-0.5 md:mt-1">
-                            <div className="flex items-center text-[8px] md:text-[10px] font-black text-yellow-600 bg-yellow-50 px-1.5 md:px-2 py-0.5 rounded-md uppercase tracking-widest">
-                              <span className="material-symbols-outlined text-[10px] md:text-[12px] mr-0.5 md:mr-1" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                              Top Rated
-                            </div>
-                            {ride.rideType && (
-                              <div className="flex items-center text-[8px] md:text-[10px] font-black text-zinc-400 bg-zinc-50 px-1.5 md:px-2 py-0.5 rounded-md uppercase tracking-widest border border-zinc-100">
-                                <span className="material-symbols-outlined text-[10px] md:text-[12px] mr-0.5 md:mr-1">ac_unit</span>
-                                {ride.rideType}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end">
-                        <span className="text-lg md:text-3xl font-black text-zinc-900 tracking-tighter">₹{Math.round((ride.fare || 0) / ((ride.passengers?.length || 0) + 1))}</span>
-                        <span className="text-[7px] md:text-[9px] font-black text-zinc-400 uppercase tracking-widest mt-0.5">per person</span>
+                <>
+                  {isAdvancedSearch && exactMatches.length > 0 && (
+                    <div className="col-span-full">
+                      <h3 className="text-xl font-black text-zinc-900 mb-2">Exact Matches</h3>
+                    </div>
+                  )}
+                  {isAdvancedSearch && exactMatches.map(ride => <RideCard key={ride.id} ride={ride} />)}
+
+                  {isAdvancedSearch && exactMatches.length === 0 && similarRides.length > 0 && (
+                    <div className="col-span-full bg-red-50 text-red-900 p-4 rounded-xl border border-red-200 flex items-start gap-3">
+                      <span className="material-symbols-outlined text-red-500">info</span>
+                      <div>
+                        <h4 className="font-bold text-sm">Exact Match Not Found</h4>
+                        <p className="text-xs opacity-80 mt-1">No rides found exactly at {searchDate}, {formatTime12h(searchTime)}. Showing similar available rides below:</p>
                       </div>
                     </div>
+                  )}
 
-                    <div className="space-y-4 md:space-y-6 mb-4 md:mb-8 relative">
-                      {/* Decorative path line */}
-                      <div className="absolute left-[13px] md:left-[15px] top-4 bottom-4 w-0.5 bg-zinc-100 group-hover:bg-[#FFD100]/30 transition-colors"></div>
-                      
-                      <div className="flex items-center gap-3 md:gap-6 relative z-10">
-                        <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-zinc-50 flex items-center justify-center text-zinc-400 group-hover:bg-white transition-all skeuo-card border-none text-[10px]">
-                          <span className="material-symbols-outlined text-xs md:text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>location_on</span>
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-[8px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest">Pickup</p>
-                          <p className="text-zinc-600 font-bold text-sm md:text-base truncate">{ride.pickup}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3 md:gap-6 relative z-10">
-                        <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-zinc-900 flex items-center justify-center text-[#FFD100] shadow-lg">
-                          <span className="material-symbols-outlined text-xs md:text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>map</span>
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-[8px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest">Destination</p>
-                          <p className="text-zinc-900 font-black text-sm md:text-base truncate">{ride.destination}</p>
-                        </div>
-                      </div>
+                  {isAdvancedSearch && similarRides.length > 0 && (
+                    <div className="col-span-full mt-4">
+                      <h3 className="text-xl font-black text-zinc-900 mb-2">Similar Available Rides</h3>
                     </div>
+                  )}
+                  {isAdvancedSearch && similarRides.map(ride => <RideCard key={ride.id} ride={ride} />)}
 
-                    <div className="grid grid-cols-2 gap-y-4 gap-x-3 md:gap-y-6 md:gap-x-4 mb-4 md:mb-8 pt-4 md:pt-6 border-t border-zinc-50">
-                      {/* Date */}
-                      <div className="flex items-center gap-2 md:gap-3">
-                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-400">
-                          <span className="material-symbols-outlined text-lg md:text-xl">calendar_today</span>
-                        </div>
-                        <div>
-                          <p className="text-[8px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-0.5 md:mb-1">Date</p>
-                          <p className="text-xs md:text-sm font-black text-zinc-900">{ride.date}</p>
-                        </div>
-                      </div>
-                      
-                      {/* Time */}
-                      <div className="flex items-center gap-2 md:gap-3">
-                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-400">
-                          <span className="material-symbols-outlined text-lg md:text-xl">schedule</span>
-                        </div>
-                        <div>
-                          <p className="text-[8px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-0.5 md:mb-1">Time</p>
-                          <p className="text-xs md:text-sm font-black text-zinc-900">{formatTime12h(ride.time)}</p>
-                        </div>
-                      </div>
-
-                      {/* Vehicle */}
-                      <div className="flex items-center gap-2 md:gap-3">
-                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-400">
-                          <span className="material-symbols-outlined text-lg md:text-xl">directions_car</span>
-                        </div>
-                        <div>
-                          <p className="text-[8px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-0.5 md:mb-1">Vehicle</p>
-                          <p className="text-xs md:text-sm font-black text-zinc-900 truncate max-w-[100px]">{ride.carModel || 'Sedan'}</p>
-                        </div>
-                      </div>
-
-                      {/* Seats */}
-                      <div className="flex items-center gap-2 md:gap-3">
-                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-400">
-                          <span className="material-symbols-outlined text-lg md:text-xl">group</span>
-                        </div>
-                        <div>
-                          <p className="text-[8px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-0.5 md:mb-1">Seats</p>
-                          <p className="text-xs md:text-sm font-black text-zinc-900">{(ride.availableSeats !== undefined ? ride.availableSeats : (ride.seats || 4))} left</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="w-full py-2.5 md:py-4 bg-zinc-900 text-[#FFD100] text-center font-black rounded-xl md:rounded-2xl hover:bg-zinc-800 transition-all shadow-lg active:scale-[0.98] text-sm md:text-base">
-                      Join Now
-                    </div>
-                  </Link>
-                ))
+                  {!isAdvancedSearch && filteredRides.map(ride => <RideCard key={ride.id} ride={ride} />)}
+                </>
               ) : (
                 <div className="col-span-full py-16 md:py-20 text-center bg-white rounded-2xl md:rounded-[2rem] skeuo-card !transition-none flex flex-col items-center">
                   <div className="w-16 h-16 md:w-20 md:h-20 bg-zinc-50 rounded-3xl flex items-center justify-center mb-4 md:mb-6 text-zinc-300">
                     <span className="material-symbols-outlined text-4xl md:text-5xl">search_off</span>
                   </div>
                   <h3 className="text-xl md:text-2xl font-black text-zinc-900 mb-1 md:mb-2">No rides found</h3>
-                  <p className="text-zinc-400 font-medium text-sm md:text-base max-w-xs mx-auto px-4">Try adjusting your search terms or filters to find more travelers.</p>
+                  <p className="text-zinc-400 font-medium text-sm md:text-base max-w-xs mx-auto px-4">
+                    {isAdvancedSearch 
+                      ? "We couldn't find any rides matching your search criteria. Try modifying your filters or search."
+                      : "Try adjusting your search terms or filters to find more travelers."
+                    }
+                  </p>
                 </div>
               )}
             </div>

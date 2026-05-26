@@ -12,6 +12,7 @@ const Dashboard = () => {
   const [myRides, setMyRides] = useState([]);
   const [myRequests, setMyRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [announcement, setAnnouncement] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -49,10 +50,15 @@ const Dashboard = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
+    if (!searchData.pickup || !searchData.destination || !searchData.date || !searchData.time) {
+      showNotification("Missing Fields", "Please fill in all 4 fields (Pickup, Destination, Date, and Time) to find the best rides.");
+      return;
+    }
     const queryParams = new URLSearchParams();
-    if (searchData.pickup) queryParams.append('from', searchData.pickup);
-    if (searchData.destination) queryParams.append('to', searchData.destination);
-    if (searchData.date) queryParams.append('date', searchData.date);
+    queryParams.append('from', searchData.pickup);
+    queryParams.append('to', searchData.destination);
+    queryParams.append('date', searchData.date);
+    queryParams.append('time', searchData.time);
     navigate(`/browse?${queryParams.toString()}`);
   };
 
@@ -114,9 +120,18 @@ const Dashboard = () => {
       setLoading(false);
     });
 
+    const unsubscribeAnnouncement = onSnapshot(doc(db, 'system', 'announcement'), (docSnap) => {
+      if (docSnap.exists() && docSnap.data().active) {
+        setAnnouncement(docSnap.data().message);
+      } else {
+        setAnnouncement(null);
+      }
+    });
+
     return () => {
       unsubscribeMyRides();
       unsubscribeMyRequests();
+      unsubscribeAnnouncement();
     };
   }, [currentUser]);
 
@@ -149,6 +164,12 @@ const Dashboard = () => {
 
   return (
     <div className="bg-[#F5F5F0] min-h-screen">
+      {/* ── GLOBAL ANNOUNCEMENT BANNER ── */}
+      {announcement && (
+        <div className="bg-[#FFD100] px-4 py-3 text-center text-zinc-900 font-black text-sm relative z-20 shadow-md">
+          {announcement}
+        </div>
+      )}
 
       {/* ── HERO / SEARCH ── */}
       <section className="relative overflow-hidden px-4 sm:px-8 pt-8 pb-6 md:pt-16 md:pb-12">
@@ -342,12 +363,12 @@ const Dashboard = () => {
         )}
       </section>
 
-      {/* ── REQUEST STATUS ── */}
+      {/* ── JOINED RIDES ── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-8 pb-24 md:pb-12">
         <div className="flex items-center justify-between mb-3 md:mb-6">
           <h2 className="text-base md:text-2xl font-black text-zinc-900 tracking-tight flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#FFD100] text-xl md:text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>history</span>
-            Request Status
+            <span className="material-symbols-outlined text-[#FFD100] text-xl md:text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>group</span>
+            Joined Rides
           </h2>
           <Link to="/my-joined-rides" className="text-[#FFD100] font-black text-xs md:text-sm hover:text-yellow-600 transition-colors flex items-center gap-0.5">
             View all
@@ -419,10 +440,10 @@ const Dashboard = () => {
         ) : (
           <div className="bg-white rounded-2xl md:rounded-[2.5rem] p-8 md:p-14 text-center skeuo-card border-dashed border-2 border-zinc-100 flex flex-col items-center">
             <div className="w-12 h-12 md:w-16 md:h-16 bg-zinc-50 rounded-2xl flex items-center justify-center mb-3 md:mb-5 text-zinc-200">
-              <span className="material-symbols-outlined text-3xl md:text-4xl">history</span>
+              <span className="material-symbols-outlined text-3xl md:text-4xl">group</span>
             </div>
-            <h3 className="text-base md:text-xl font-black text-zinc-900 mb-1 md:mb-2">No requests sent yet</h3>
-            <p className="text-zinc-400 font-medium mb-4 md:mb-7 max-w-xs text-sm">Start joining rides to track your request statuses here.</p>
+            <h3 className="text-base md:text-xl font-black text-zinc-900 mb-1 md:mb-2">No joined rides yet</h3>
+            <p className="text-zinc-400 font-medium mb-4 md:mb-7 max-w-xs text-sm">Start joining rides to track your journey statuses here.</p>
             <Link to="/browse" className="bg-zinc-900 text-[#FFD100] font-black py-2.5 md:py-4 px-6 md:px-10 rounded-xl hover:bg-zinc-800 transition-all text-sm active:scale-95">
               Find a Ride
             </Link>

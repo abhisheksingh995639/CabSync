@@ -8,6 +8,8 @@ import PostRide from './pages/PostRide';
 import RideDetails from './pages/RideDetails';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
+import PublicProfile from './pages/PublicProfile';
+import Settings from './pages/Settings';
 import EditProfile from './pages/EditProfile';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
@@ -78,7 +80,9 @@ function App() {
                 <Route path="/post" element={<PostRide />} />
                 <Route path="/browse" element={<BrowseRides />} />
                 <Route path="/ride/:id" element={<RideDetails />} />
-                <Route path="/profile/:id?" element={<Profile />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/user/:id" element={<PublicProfile />} />
+                <Route path="/settings" element={<Settings />} />
                 <Route path="/edit-profile" element={<EditProfile />} />
                 <Route path="/history" element={<History />} />
                 <Route path="/confirmed-ride/:id" element={<ConfirmedRide />} />

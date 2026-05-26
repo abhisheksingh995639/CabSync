@@ -452,7 +452,7 @@ const RideDetails = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Host Card (Always at the top) */}
                 <div className="flex items-center justify-between gap-4 bg-zinc-50 p-3 rounded-2xl border border-zinc-100 hover:bg-zinc-100 transition-all group">
-                  <Link to={`/profile/${ride.hostId}`} className="flex items-center gap-4 min-w-0 hover:opacity-85 transition-all group/p">
+                  <Link to={`/user/${ride.hostId}`} className="flex items-center gap-4 min-w-0 hover:opacity-85 transition-all group/p">
                     <img 
                       className="w-12 h-12 rounded-xl object-cover skeuo-card border-none" 
                       src={ride.hostPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(ride.hostName)}&background=FFD100&color=000000`} 
@@ -473,7 +473,7 @@ const RideDetails = () => {
                 {ride.passengers?.length > 0 && (
                   ride.passengers.map((pId, i) => (
                     <div key={i} className="flex items-center justify-between gap-4 bg-zinc-50 p-3 rounded-2xl border border-zinc-100 hover:bg-zinc-100 transition-all group">
-                      <Link to={`/profile/${pId}`} className="flex items-center gap-4 min-w-0 hover:opacity-85 transition-all group/p">
+                      <Link to={`/user/${pId}`} className="flex items-center gap-4 min-w-0 hover:opacity-85 transition-all group/p">
                         <img className="w-12 h-12 rounded-xl object-cover skeuo-card border-none" src={passengerDetails[pId]?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(passengerDetails[pId]?.name || 'P')}&background=FFD100&color=000000`} alt="Passenger" />
                         <div className="min-w-0">
                           <p className="font-black text-sm text-zinc-900 truncate group-hover/p:text-[#FFD100] transition-colors">{passengerDetails[pId]?.name || `User #${pId.slice(0, 4)}`}</p>
@@ -524,6 +524,17 @@ const RideDetails = () => {
               <div className="text-center border-l border-white/10">
                 <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Available Seats</p>
                 <p className="text-xl font-black text-[#FFD100]">{(ride.availableSeats !== undefined ? ride.availableSeats : (ride.seats || 4))} of {ride.seats || 4}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-8 pt-8 border-t border-white/10 mt-8">
+              <div className="text-center">
+                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Vehicle Type</p>
+                <p className="text-xl font-black">{ride.carModel || 'Not Confirmed'}</p>
+              </div>
+              <div className="text-center border-l border-white/10">
+                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Comfort</p>
+                <p className="text-xl font-black text-[#FFD100]">{ride.tags?.includes('AC') ? 'AC' : 'Non-AC'}</p>
               </div>
             </div>
           </div>

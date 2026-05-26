@@ -12,7 +12,9 @@ import {
   increment,
   orderBy,
   where,
-  getDocs
+  getDocs,
+  setDoc,
+  serverTimestamp
 } from 'firebase/firestore';
 import { useNotification } from '../context/NotificationContext';
 import { formatTime12h } from '../utils/formatters';
@@ -28,6 +30,14 @@ const AdminDashboard = () => {
   const [userSearch, setUserSearch] = useState('');
   const [rideSearch, setRideSearch] = useState('');
 
+  const [reports, setReports] = useState([]);
+  const [systemSettings, setSystemSettings] = useState({
+    maintenanceMode: false,
+    allowSignups: true
+  });
+  const [announcement, setAnnouncement] = useState('');
+  const [currentAnnouncement, setCurrentAnnouncement] = useState(null);
+
   useEffect(() => {
     const unsubUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
       setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -38,24 +48,25 @@ const AdminDashboard = () => {
     });
 
     const unsubReports = onSnapshot(collection(db, 'reports'), (snapshot) => {
-      // Assuming a 'reports' collection exists or will be used
       setReports(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
+    });
+
+    const unsubAnnouncement = onSnapshot(doc(db, 'system', 'announcement'), (docSnap) => {
+      if (docSnap.exists() && docSnap.data().active) {
+        setCurrentAnnouncement(docSnap.data().message);
+      } else {
+        setCurrentAnnouncement(null);
+      }
     });
 
     return () => {
       unsubUsers();
       unsubRides();
       unsubReports();
+      unsubAnnouncement();
     };
   }, []);
-
-  const [reports, setReports] = useState([]);
-  const [systemSettings, setSystemSettings] = useState({
-    maintenanceMode: false,
-    allowSignups: true
-  });
-  const [announcement, setAnnouncement] = useState('');
 
   const handleDeleteUser = (userId) => {
     showConfirm("Delete User", "Are you sure you want to delete this user? This action cannot be undone.", async () => {
@@ -69,10 +80,16 @@ const AdminDashboard = () => {
   };
 
   const handleDeleteRide = (rideId) => {
-    showConfirm("Delete Ride", "Are you sure you want to delete this ride?", async () => {
+    showConfirm("Delete Ride", "Are you sure you want to delete this ride and all associated requests?", async () => {
       try {
+        const requestsQuery = query(collection(db, 'requests'), where('rideId', '==', rideId));
+        const requestsSnapshot = await getDocs(requestsQuery);
+        
+        const deletePromises = requestsSnapshot.docs.map(reqDoc => deleteDoc(doc(db, 'requests', reqDoc.id)));
+        await Promise.all(deletePromises);
+
         await deleteDoc(doc(db, 'rides', rideId));
-        showNotification("Success", "Ride deleted successfully");
+        showNotification("Success", "Ride and all associated requests deleted successfully");
       } catch (err) {
         showNotification("Error", "Failed to delete ride");
       }
@@ -87,6 +104,17 @@ const AdminDashboard = () => {
       showNotification("Success", `User ${!currentStatus ? 'verified' : 'unverified'}`);
     } catch (err) {
       showNotification("Error", "Failed to update status");
+    }
+  };
+
+  const toggleUserBan = async (userId, isBanned) => {
+    try {
+      await updateDoc(doc(db, 'users', userId), {
+        isBanned: !isBanned
+      });
+      showNotification("Success", `User ${!isBanned ? 'banned' : 'unbanned'}`);
+    } catch (err) {
+      showNotification("Error", "Failed to update ban status");
     }
   };
 
@@ -241,7 +269,7 @@ const AdminDashboard = () => {
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-black text-xs text-zinc-900">₹{ride.price || '0'}</p>
+                          <p className="font-black text-xs text-zinc-900">₹{ride.fare || '0'}</p>
                           <p className="text-[10px] text-zinc-400 font-bold uppercase">{ride.status}</p>
                         </div>
                       </div>
@@ -302,14 +330,24 @@ const AdminDashboard = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <button 
-                            onClick={() => toggleUserVerification(user.id, user.isVerified)}
-                            className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all ${
-                              user.isVerified ? 'bg-green-100 text-green-700' : 'bg-zinc-100 text-zinc-500'
-                            }`}
-                          >
-                            {user.isVerified ? 'Verified' : 'Verify Now'}
-                          </button>
+                          <div className="flex flex-col gap-1">
+                            <button 
+                              onClick={() => toggleUserVerification(user.id, user.isVerified)}
+                              className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all w-full ${
+                                user.isVerified ? 'bg-green-100 text-green-700' : 'bg-zinc-100 text-zinc-500'
+                              }`}
+                            >
+                              {user.isVerified ? 'Verified' : 'Verify Now'}
+                            </button>
+                            <button 
+                              onClick={() => toggleUserBan(user.id, user.isBanned)}
+                              className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all w-full ${
+                                user.isBanned ? 'bg-red-100 text-red-700' : 'bg-zinc-100 text-zinc-500'
+                              }`}
+                            >
+                              {user.isBanned ? 'Banned' : 'Ban User'}
+                            </button>
+                          </div>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <button 
@@ -353,6 +391,7 @@ const AdminDashboard = () => {
                       <th className="px-6 py-4 text-xs font-black text-zinc-400 uppercase tracking-widest">Host</th>
                       <th className="px-6 py-4 text-xs font-black text-zinc-400 uppercase tracking-widest">Time/Date</th>
                       <th className="px-6 py-4 text-xs font-black text-zinc-400 uppercase tracking-widest">Seats</th>
+                      <th className="px-6 py-4 text-xs font-black text-zinc-400 uppercase tracking-widest">Fare</th>
                       <th className="px-6 py-4 text-xs font-black text-zinc-400 uppercase tracking-widest">Status</th>
                       <th className="px-6 py-4 text-xs font-black text-zinc-400 uppercase tracking-widest text-right">Actions</th>
                     </tr>
@@ -381,7 +420,10 @@ const AdminDashboard = () => {
                           <p className="text-xs text-zinc-400 font-medium">{ride.date}</p>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="text-sm font-bold text-zinc-700">{ride.availableSeats}/{ride.seats}</span>
+                          <span className="text-sm font-bold text-zinc-700">{ride.availableSeats !== undefined ? ride.availableSeats : ride.seats}/{ride.seats}</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-sm font-bold text-zinc-700">₹{ride.fare || 0}</span>
                         </td>
                         <td className="px-6 py-4">
                           <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
@@ -522,14 +564,50 @@ const AdminDashboard = () => {
               />
               
               <button 
-                onClick={() => {
-                  showNotification("Success", "Announcement broadcasted!");
-                  setAnnouncement('');
+                onClick={async () => {
+                  if (!announcement.trim()) return;
+                  try {
+                    await setDoc(doc(db, 'system', 'announcement'), {
+                      message: announcement,
+                      active: true,
+                      timestamp: serverTimestamp()
+                    });
+                    showNotification("Success", "Announcement broadcasted!");
+                    setAnnouncement('');
+                  } catch (err) {
+                    showNotification("Error", "Failed to broadcast");
+                  }
                 }}
-                className="w-full bg-[#FFD100] text-zinc-900 font-black py-4 rounded-xl shadow-lg shadow-yellow-400/20 active:scale-95 transition-all"
+                className="w-full bg-[#FFD100] text-zinc-900 font-black py-4 rounded-xl shadow-lg shadow-yellow-400/20 active:scale-95 transition-all mb-4"
               >
                 Broadcast to Everyone
               </button>
+
+              {currentAnnouncement && (
+                <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl flex justify-between items-center mt-6">
+                  <div>
+                    <p className="text-[10px] text-blue-500 font-black uppercase tracking-widest mb-1">Current Active Announcement</p>
+                    <p className="text-sm font-bold text-blue-900">{currentAnnouncement}</p>
+                  </div>
+                  <button 
+                    onClick={async () => {
+                      try {
+                        await setDoc(doc(db, 'system', 'announcement'), {
+                          message: '',
+                          active: false,
+                          timestamp: serverTimestamp()
+                        }, { merge: true });
+                        showNotification("Success", "Announcement cleared.");
+                      } catch (err) {
+                        showNotification("Error", "Failed to clear announcement");
+                      }
+                    }}
+                    className="bg-white text-blue-600 px-4 py-2 rounded-xl text-xs font-black shadow-sm"
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

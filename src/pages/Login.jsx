@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
@@ -11,6 +11,9 @@ const Login = () => {
 
   const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  const [successMessage, setSuccessMessage] = useState(location.state?.message || '');
 
   const handleGoogleLogin = async () => {
     try {
@@ -34,7 +37,11 @@ const Login = () => {
       await login(email, password);
       navigate('/dashboard');
     } catch (err) {
-      setError('Failed to log in. Please check your credentials.');
+      if (err.message === "unverified_email") {
+        setError("Please check your email and spam folder to verify your account before logging in.");
+      } else {
+        setError('Failed to log in. Please check your credentials.');
+      }
     } finally {
       setLoading(false);
     }
@@ -67,7 +74,14 @@ const Login = () => {
 
         {/* Right Side: Form */}
         <div className="w-full md:w-1/2 h-full p-8 md:p-16 flex flex-col justify-center bg-white relative z-10">
-          <h2 className="text-4xl font-black text-zinc-900 mb-10 text-center tracking-tight">Login</h2>
+          <h2 className="text-4xl font-black text-zinc-900 mb-2 text-center tracking-tight">Login</h2>
+
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 mb-8 flex items-start gap-3">
+            <span className="material-symbols-outlined text-yellow-600 mt-0.5 text-xl">verified</span>
+            <p className="text-sm font-medium text-yellow-800 leading-snug">
+              Sign in with your college email (.edu, .ac.in) for automatic account verification!
+            </p>
+          </div>
 
           {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm text-center mb-6 font-medium border border-red-100">{error}</div>}
 

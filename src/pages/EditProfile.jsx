@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+import { collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
+import { db } from '../firebase';
+
 const AVATAR_PRESETS = [
   "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix",
   "https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka",
@@ -64,6 +67,41 @@ const EditProfile = () => {
         ...formData,
         photoUrl: selectedAvatar
       });
+
+      if (currentUser) {
+        // Update all hosted rides
+        const ridesRef = collection(db, 'rides');
+        const qRides = query(ridesRef, where('hostId', '==', currentUser.uid));
+        const ridesSnap = await getDocs(qRides);
+        
+        if (!ridesSnap.empty) {
+          const batch = writeBatch(db);
+          ridesSnap.forEach((docSnap) => {
+            batch.update(docSnap.ref, {
+              hostName: formData.name,
+              hostPhoto: selectedAvatar
+            });
+          });
+          await batch.commit();
+        }
+
+        // Update all pending requests where user is a passenger
+        const reqsRef = collection(db, 'requests');
+        const qReqs = query(reqsRef, where('passengerId', '==', currentUser.uid));
+        const reqsSnap = await getDocs(qReqs);
+        
+        if (!reqsSnap.empty) {
+          const batchReqs = writeBatch(db);
+          reqsSnap.forEach((docSnap) => {
+            batchReqs.update(docSnap.ref, {
+              passengerName: formData.name,
+              passengerPhoto: selectedAvatar
+            });
+          });
+          await batchReqs.commit();
+        }
+      }
+
       navigate('/profile');
     } catch (error) {
       console.error("Error updating profile:", error);

@@ -7,7 +7,8 @@ import {
   onAuthStateChanged,
   GoogleAuthProvider,
   signInWithPopup,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  sendEmailVerification
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 
@@ -23,6 +24,13 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const googleProvider = new GoogleAuthProvider();
+
+  // Helper function to check if email is a college email
+  const isCollegeEmail = (email) => {
+    if (!email) return false;
+    const lower = email.toLowerCase();
+    return lower.endsWith('.edu') || lower.endsWith('.ac.in');
+  };
 
   // Sign in with Google
   const loginWithGoogle = async () => {
@@ -41,14 +49,22 @@ export const AuthProvider = ({ children }) => {
             phone: user.phoneNumber || '',
             email: user.email,
             photoUrl: user.photoURL || '',
-            isVerified: false,
+            isVerified: isCollegeEmail(user.email),
             rating: 0,
             createdAt: new Date().toISOString()
           };
           await setDoc(profileRef, profileData);
           setUserProfile(profileData);
         } else {
-          setUserProfile(profileSnap.data());
+          const data = profileSnap.data();
+          if (!data.isVerified && isCollegeEmail(user.email)) {
+            // Auto-verify existing college email users
+            const updateData = { ...data, isVerified: true };
+            await setDoc(profileRef, updateData, { merge: true });
+            setUserProfile(updateData);
+          } else {
+            setUserProfile(data);
+          }
         }
       } catch (firestoreError) {
         console.error("Firestore error during Google login:", firestoreError);
@@ -75,19 +91,50 @@ export const AuthProvider = ({ children }) => {
       phone: additionalData.phone || '',
       email: email,
       photoUrl: '',
-      isVerified: false,
+      isVerified: isCollegeEmail(email),
       rating: 0,
+      ratingCount: 0,
       createdAt: new Date().toISOString()
     };
     
     await setDoc(profileRef, profileData);
-    setUserProfile(profileData);
+    
+    await sendEmailVerification(user);
+    await signOut(auth);
+    
+    // We clear userProfile since we're signing them out immediately
+    setUserProfile(null);
     
     return userCredential;
   };
 
-  const login = (email, password) => {
-    return signInWithEmailAndPassword(auth, email, password);
+  const login = async (email, password) => {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    
+    if (!user.emailVerified) {
+      await signOut(auth);
+      throw new Error("unverified_email");
+    }
+    
+    // Check if they need auto-verification upon login
+    if (isCollegeEmail(user.email)) {
+      try {
+        const profileRef = doc(db, 'users', user.uid);
+        const profileSnap = await getDoc(profileRef);
+        if (profileSnap.exists()) {
+          const data = profileSnap.data();
+          if (!data.isVerified) {
+            await setDoc(profileRef, { isVerified: true }, { merge: true });
+            setUserProfile({ ...data, isVerified: true });
+          }
+        }
+      } catch (err) {
+        console.error("Auto-verification error on login:", err);
+      }
+    }
+    
+    return userCredential;
   };
 
   const logout = () => {
@@ -124,11 +171,26 @@ export const AuthProvider = ({ children }) => {
         unsubscribeProfile = onSnapshot(profileRef, async (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data();
-            setUserProfile(data);
-            
+            let shouldUpdate = false;
+            let updates = {};
+
             // Auto-reactivate if deactivated
             if (data.isDeactivated) {
-              await setDoc(profileRef, { isDeactivated: false }, { merge: true });
+              updates.isDeactivated = false;
+              shouldUpdate = true;
+            }
+            
+            // Auto-verify if college email
+            if (!data.isVerified && isCollegeEmail(user.email)) {
+              updates.isVerified = true;
+              shouldUpdate = true;
+            }
+
+            if (shouldUpdate) {
+              await setDoc(profileRef, updates, { merge: true });
+              setUserProfile({ ...data, ...updates });
+            } else {
+              setUserProfile(data);
             }
           } else {
             // No profile yet (new user), allow them to see the app
