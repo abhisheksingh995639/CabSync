@@ -306,7 +306,7 @@ const Home = () => {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-5 relative z-10">
               <a 
-                href="/cabsync.apk"
+                href="https://github.com/abhisheksingh995639/CabSync-App/releases/latest/download/app-release.apk"
                 download="CabSync.apk"
                 className="skeuo-button-tactile-dark text-white w-full sm:w-auto px-8 md:px-10 py-4 rounded-2xl font-black text-base md:text-lg flex items-center justify-center gap-3"
               >
