@@ -183,7 +183,7 @@ const BrowseRides = () => {
             <div className="flex gap-1.5 md:gap-2 mt-0.5 md:mt-1">
               <div className="flex items-center text-[8px] md:text-[10px] font-black text-yellow-600 bg-yellow-50 px-1.5 md:px-2 py-0.5 rounded-md uppercase tracking-widest">
                 <span className="material-symbols-outlined text-[10px] md:text-[12px] mr-0.5 md:mr-1" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                {ride.rating ? ride.rating.toFixed(1) : '5.0'}
+                {ride.rating != null ? ride.rating.toFixed(1) : 'New'}
               </div>
               {ride.rideType && (
                 <div className="flex items-center text-[8px] md:text-[10px] font-black text-zinc-400 bg-zinc-50 px-1.5 md:px-2 py-0.5 rounded-md uppercase tracking-widest border border-zinc-100">
