@@ -5,7 +5,7 @@ import Footer from '../components/Footer';
 
 const Home = () => {
   const { currentUser } = useAuth();
-  const [showAppModal, setShowAppModal] = React.useState(false);
+  const [showIosModal, setShowIosModal] = React.useState(false);
 
   if (currentUser) {
     return <Navigate to="/dashboard" />;
@@ -305,17 +305,20 @@ const Home = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-5 relative z-10">
-              <button 
-                onClick={() => setShowAppModal(true)}
-                className="skeuo-button-tactile-dark text-white w-full sm:w-auto px-8 md:px-10 py-4 rounded-2xl font-black text-base md:text-lg"
+              <a 
+                href="/cabsync.apk"
+                download="CabSync.apk"
+                className="skeuo-button-tactile-dark text-white w-full sm:w-auto px-8 md:px-10 py-4 rounded-2xl font-black text-base md:text-lg flex items-center justify-center gap-3"
               >
+                <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>android</span>
                 Download for Android
-              </button>
+              </a>
               <button 
-                onClick={() => setShowAppModal(true)}
-                className="skeuo-button-tactile-light text-zinc-900 w-full sm:w-auto px-8 md:px-10 py-4 rounded-2xl font-black text-base md:text-lg"
+                onClick={() => setShowIosModal(true)}
+                className="skeuo-button-tactile-light text-zinc-900 w-full sm:w-auto px-8 md:px-10 py-4 rounded-2xl font-black text-base md:text-lg flex items-center justify-center gap-3"
               >
-                Download for iOS
+                <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>apple</span>
+                Get it on iOS
               </button>
             </div>
           </div>
@@ -325,55 +328,53 @@ const Home = () => {
       {/* Footer */}
       <Footer />
 
-      {/* App Coming Soon Modal */}
-      {showAppModal && (
+      {/* iOS Add to Home Screen Modal */}
+      {showIosModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
           <div 
             className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm animate-fade-in" 
-            onClick={() => setShowAppModal(false)}
+            onClick={() => setShowIosModal(false)}
           ></div>
-          <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-8 md:p-10 skeuo-card relative z-10 animate-scale-in">
+          <div className="bg-white w-full max-w-md rounded-[2.5rem] p-8 md:p-10 skeuo-card relative z-10 animate-scale-in">
             <button 
-              onClick={() => setShowAppModal(false)} 
+              onClick={() => setShowIosModal(false)} 
               className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full hover:bg-zinc-100 text-zinc-400 hover:text-zinc-900 transition-colors"
             >
               <span className="material-symbols-outlined">close</span>
             </button>
-            
-            <div className="w-20 h-20 bg-yellow-100 rounded-3xl flex items-center justify-center mb-8 mx-auto">
-              <span className="material-symbols-outlined text-yellow-600 text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>install_mobile</span>
+
+            <div className="w-20 h-20 bg-zinc-900 rounded-3xl flex items-center justify-center mb-6 mx-auto shadow-xl">
+              <span className="material-symbols-outlined text-white text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>apple</span>
             </div>
 
-            <h2 className="text-3xl font-black text-zinc-900 mb-4 tracking-tight text-center">
-              Mobile App Coming Soon!
-            </h2>
-            
-            <p className="text-zinc-500 text-center mb-8 leading-relaxed">
-              We're hard at work on our native apps. For the best experience right now, add CabSync to your home screen!
+            <h2 className="text-2xl font-black text-zinc-900 mb-2 tracking-tight text-center">Add to Home Screen</h2>
+            <p className="text-zinc-500 text-sm text-center mb-8 leading-relaxed">
+              We don't have an iOS app yet, but you can install CabSync as a web app for a native-like experience!
             </p>
 
-            <div className="space-y-4 mb-10">
-              <div className="flex items-start gap-4 p-4 bg-zinc-50 rounded-2xl">
-                <span className="material-symbols-outlined text-zinc-400 mt-0.5">apple</span>
-                <div>
-                  <h4 className="font-bold text-zinc-900 text-sm">On iOS / Safari</h4>
-                  <p className="text-zinc-500 text-xs mt-1">Tap the <span className="font-bold">Share</span> button and select <span className="font-bold">"Add to Home Screen"</span></p>
+            <div className="space-y-3 mb-8">
+              {[
+                { step: '1', icon: 'ios_share', label: 'Tap the Share button', sub: 'The box with an arrow at the bottom of Safari' },
+                { step: '2', icon: 'add_box', label: 'Tap "Add to Home Screen"', sub: 'Scroll down in the share sheet to find it' },
+                { step: '3', icon: 'check_circle', label: 'Tap "Add" to confirm', sub: 'CabSync will appear on your home screen' },
+              ].map(({ step, icon, label, sub }) => (
+                <div key={step} className="flex items-center gap-4 p-4 bg-zinc-50 rounded-2xl">
+                  <div className="w-9 h-9 shrink-0 bg-zinc-900 rounded-xl flex items-center justify-center">
+                    <span className="material-symbols-outlined text-[#FFD100] text-base" style={{ fontVariationSettings: "'FILL' 1" }}>{icon}</span>
+                  </div>
+                  <div>
+                    <p className="font-bold text-zinc-900 text-sm">{label}</p>
+                    <p className="text-zinc-400 text-xs mt-0.5">{sub}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-start gap-4 p-4 bg-zinc-50 rounded-2xl">
-                <span className="material-symbols-outlined text-zinc-400 mt-0.5">android</span>
-                <div>
-                  <h4 className="font-bold text-zinc-900 text-sm">On Android / Chrome</h4>
-                  <p className="text-zinc-500 text-xs mt-1">Tap the <span className="font-bold">Menu (3 dots)</span> and select <span className="font-bold">"Install App"</span> or <span className="font-bold">"Add to Home Screen"</span></p>
-                </div>
-              </div>
+              ))}
             </div>
 
             <button 
-              onClick={() => setShowAppModal(false)}
+              onClick={() => setShowIosModal(false)}
               className="w-full py-4 bg-zinc-900 text-[#FFD100] font-black rounded-2xl shadow-xl hover:bg-zinc-800 transition-all active:scale-95"
             >
-              Got it, thanks!
+              Got it!
             </button>
           </div>
         </div>
