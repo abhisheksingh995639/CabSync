@@ -80,6 +80,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Generate a random avatar URL for email/password users
+  const getRandomAvatarUrl = (name) => {
+    const styles = [
+      'adventurer',
+      'avataaars',
+      'big-ears',
+      'lorelei',
+      'notionists',
+      'open-peeps',
+    ];
+    const style = styles[Math.floor(Math.random() * styles.length)];
+    const seed = encodeURIComponent(name || Math.random().toString(36).slice(2));
+    return `https://api.dicebear.com/9.x/${style}/svg?seed=${seed}`;
+  };
+
   // Sign up and create Firestore profile document
   const signup = async (email, password, additionalData) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -91,7 +106,7 @@ export const AuthProvider = ({ children }) => {
       name: additionalData.name || '',
       phone: additionalData.phone || '',
       email: email,
-      photoUrl: '',
+      photoUrl: getRandomAvatarUrl(additionalData.name),
       isVerified: isCollegeEmail(email),
       rating: 0,
       ratingCount: 0,
